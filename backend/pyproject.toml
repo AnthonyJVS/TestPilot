@@ -18,6 +18,11 @@ dependencies = [
     "redis==8.1.0",
     "pyjwt==2.15.1",
     "argon2-cffi==25.1.0",
+    "cryptography==50.0.2",
+    "google-genai==3.0.0",
+    "anthropic==2.6.0",
+    "openai==3.46.0",
+    "httpx2==2.16.0",
 ]
 
 [project.optional-dependencies]

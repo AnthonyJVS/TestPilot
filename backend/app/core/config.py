@@ -58,6 +58,16 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_format: Literal["json", "console"] = "json"
 
+    # Credential encryption: comma-separated "key_id:base64url(32 bytes)". The first key encrypts;
+    # all keys can decrypt (rotation). Development falls back to a generated local key file.
+    encryption_keys: SecretStr | None = None
+    dev_encryption_key_file: str = "./data/dev-encryption-keys"
+
+    # AI calls
+    ai_request_timeout_seconds: float = Field(default=90.0, ge=5, le=600)
+    ai_max_attempts: int = Field(default=3, ge=1, le=5)
+    ai_max_retry_wait_seconds: float = Field(default=20.0, ge=0, le=120)
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:
@@ -78,6 +88,8 @@ class Settings(BaseSettings):
                 raise ValueError("REDIS_URL is required in production (rate limiting).")
             if self.database_url.startswith("sqlite"):
                 raise ValueError("SQLite is not supported in production; use PostgreSQL.")
+            if not self.encryption_keys:
+                raise ValueError("ENCRYPTION_KEYS is required in production (AI credentials).")
             if not self.cookie_secure:
                 logger.warning(
                     "COOKIE_SECURE is false: refresh cookies will be sent over plain HTTP. "

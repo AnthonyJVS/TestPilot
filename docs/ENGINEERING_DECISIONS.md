@@ -109,6 +109,40 @@ client uses these types.
 report). Custom workflows and single test runs share one execution model,
 event stream and Execution Center.
 
+## ADR-012 Evidence-based model capabilities (2026-11-08, accepted; implemented in M2)
+
+**Context.** Providers expose very different metadata: Anthropic reports image
+input and structured-output support, Gemini reports neither, OpenAI reports
+nothing. Assuming capabilities would mislead users.
+**Decision.** Every capability is `supported`/`unsupported`/`unknown` with a
+source (`provider_metadata`, `probe`, `none`). Provider metadata fills unknowns;
+real successful calls (routing checks, normal tasks) record `probe` evidence,
+which metadata never overrides. Unsupported blocks a route; unknown warns.
+**Consequences.** A fresh Gemini model shows vision as unknown until the visual
+routing check passes — honest, at the cost of one extra request.
+
+## ADR-013 Orchestrator-owned retries, explicit fallback (2026-11-08, accepted; implemented in M2)
+
+**Decision.** SDK retries are disabled. The orchestrator retries only
+transient errors (rate limit, unavailable, timeout) up to `AI_MAX_ATTEMPTS`,
+honouring `retry_after`; waits longer than `AI_MAX_RETRY_WAIT_SECONDS` are not
+slept on — the task fails as *paused* with `retry_after` so the user decides.
+Quota exhaustion is never retried. Fallback is off by default, applies only to
+fallback-eligible errors (rate limit, quota, unavailable, timeout) and is
+recorded (requested vs actual model, reason, history). Structured output gets
+one repair attempt with the validation error fed back.
+**Consequences.** No silent provider switches; every attempt is auditable in
+`ai_requests.retry_history`.
+
+## ADR-014 Pinned major SDK versions on httpx2 (2026-11-08, accepted)
+
+`google-genai 3`, `anthropic 2` and `openai 3` were released after the
+architect's knowledge cutoff and all moved to `httpx2`. Their APIs were
+verified by introspecting the installed packages and by mock-HTTP tests that
+exercise the real SDK serialisation (two assumptions were corrected that way:
+Gemini's `inlineData.mime_type` and Anthropic's bearer-token header).
+Upgrades must keep `tests/unit/test_ai_adapters.py` green.
+
 ## ADR-011 Test data and secrets as references (2026-11-08, accepted; implemented in M3/M4)
 
 **Decision.** Plans reference `{{env.NAME}}` and `{{secret.NAME}}` from the

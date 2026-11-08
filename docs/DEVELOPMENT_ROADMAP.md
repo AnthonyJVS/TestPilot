@@ -12,7 +12,7 @@ known limitations, security considerations, next milestone.
 | # | Milestone | Status |
 | --- | --- | --- |
 | 1 | Foundation | Implemented; Docker acceptance pending a Docker host / CI run |
-| 2 | Multi-LLM foundation (Gemini-first Simple Mode) | Planned |
+| 2 | Multi-LLM foundation (Gemini-first Simple Mode) | Implemented; acceptance run with a real Gemini key pending |
 | 3 | Testing Workspace and test generation | Planned |
 | 4 | Browser execution worker + event pipeline | Planned |
 | 5 | Workflow Studio + DAG engine | Planned |

@@ -1,6 +1,7 @@
 import type { RouteObject } from "react-router";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { AiProvidersPage } from "@/features/ai-providers/AiProvidersPage";
 import { GuestOnly, RequireAuth, SessionGate } from "@/features/auth/guards";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
@@ -35,6 +36,7 @@ export const routes: RouteObject[] = [
             element: <AppShell />,
             children: [
               { index: true, element: <DashboardPage /> },
+              { path: "ai-providers", element: <AiProvidersPage /> },
               { path: "settings", element: <SettingsPage /> },
               ...plannedRoutes,
               { path: "*", element: <NotFoundPage /> },

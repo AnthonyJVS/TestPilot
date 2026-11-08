@@ -16,6 +16,7 @@ from app.api.middleware import RequestContextMiddleware, SecurityHeadersMiddlewa
 from app.api.router import api_router
 from app.api.routes import health
 from app.core.config import Settings, get_settings
+from app.core.crypto import build_cipher
 from app.core.logging import configure_logging
 from app.infrastructure.cache.rate_limiter import (
     InMemoryRateLimiter,
@@ -23,13 +24,18 @@ from app.infrastructure.cache.rate_limiter import (
     RedisRateLimiter,
 )
 from app.infrastructure.database.session import create_engine, create_session_factory
+from app.services.ai.registry import ProviderRegistry
 
 logger = logging.getLogger(__name__)
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None, *, provider_registry: ProviderRegistry | None = None
+) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings.log_level, settings.log_format)
+    cipher = build_cipher(settings)  # fail fast on malformed ENCRYPTION_KEYS
+    registry = provider_registry or ProviderRegistry()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -48,6 +54,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.session_factory = create_session_factory(engine)
         app.state.redis = redis
         app.state.rate_limiter = limiter
+        app.state.cipher = cipher
+        app.state.provider_registry = registry
         app.state.started_at = time.monotonic()
         logger.info(
             "TestPilot API started",

@@ -4,6 +4,184 @@
  */
 
 export interface paths {
+    "/api/v1/ai/models/{model_config_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Model */
+        delete: operations["delete_model_api_v1_ai_models__model_config_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/provider-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Provider Types */
+        get: operations["list_provider_types_api_v1_ai_provider_types_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Providers */
+        get: operations["list_providers_api_v1_ai_providers_get"];
+        put?: never;
+        /** Create Provider */
+        post: operations["create_provider_api_v1_ai_providers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/providers/{provider_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Provider */
+        get: operations["get_provider_api_v1_ai_providers__provider_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Provider */
+        delete: operations["delete_provider_api_v1_ai_providers__provider_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Provider */
+        patch: operations["update_provider_api_v1_ai_providers__provider_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/ai/providers/{provider_id}/credential": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Credential */
+        put: operations["set_credential_api_v1_ai_providers__provider_id__credential_put"];
+        post?: never;
+        /** Delete Credential */
+        delete: operations["delete_credential_api_v1_ai_providers__provider_id__credential_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/providers/{provider_id}/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Model */
+        post: operations["add_model_api_v1_ai_providers__provider_id__models_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/providers/{provider_id}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Test Provider */
+        post: operations["test_provider_api_v1_ai_providers__provider_id__test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Ai Requests */
+        get: operations["list_ai_requests_api_v1_ai_requests_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/routing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Routing */
+        get: operations["get_routing_api_v1_ai_routing_get"];
+        /** Update Routing */
+        put: operations["update_routing_api_v1_ai_routing_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/routing/check/{task}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check Task Route
+         * @description Runs one real, minimal AI call for the task's route. Spends provider quota.
+         */
+        post: operations["check_task_route_api_v1_ai_routing_check__task__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit-logs": {
         parameters: {
             query?: never;
@@ -161,6 +339,76 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AIRequestOut */
+        AIRequestOut: {
+            /** Actual Model */
+            actual_model: string | null;
+            /** Actual Provider Type */
+            actual_provider_type: string | null;
+            /** Attempts */
+            attempts: number;
+            /** Error Code */
+            error_code: string | null;
+            /** Error Message */
+            error_message: string | null;
+            /** Fallback Reason */
+            fallback_reason: string | null;
+            /** Fallback Used */
+            fallback_used: boolean;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Input Tokens */
+            input_tokens: number | null;
+            /** Latency Ms */
+            latency_ms: number | null;
+            /** Origin */
+            origin: string;
+            /** Output Tokens */
+            output_tokens: number | null;
+            /** Provider Request Id */
+            provider_request_id: string | null;
+            /** Request Preview */
+            request_preview: {
+                [key: string]: unknown;
+            } | null;
+            /** Requested Model */
+            requested_model: string;
+            /** Requested Provider Type */
+            requested_provider_type: string;
+            /** Response Preview */
+            response_preview: {
+                [key: string]: unknown;
+            } | null;
+            /** Retry History */
+            retry_history: {
+                [key: string]: unknown;
+            }[];
+            /** Route Source */
+            route_source: string | null;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Status */
+            status: string;
+            /** Task */
+            task: string | null;
+            /** Total Tokens */
+            total_tokens: number | null;
+        };
+        /** AIRequestPage */
+        AIRequestPage: {
+            /** Items */
+            items: components["schemas"]["AIRequestOut"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
         /** AuditLogOut */
         AuditLogOut: {
             /** Action */
@@ -197,6 +445,49 @@ export interface components {
             /** Next Cursor */
             next_cursor: string | null;
         };
+        /** CapabilityOut */
+        CapabilityOut: {
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "provider_metadata" | "probe" | "none";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "supported" | "unsupported" | "unknown";
+        };
+        /** ConnectionTestOut */
+        ConnectionTestOut: {
+            /** Message */
+            message: string;
+            /** Model Count */
+            model_count: number | null;
+            /** Ok */
+            ok: boolean;
+            provider: components["schemas"]["ProviderOut"];
+        };
+        /** CredentialOut */
+        CredentialOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Key Hint */
+            key_hint: string;
+            /** Rotated At */
+            rotated_at: string | null;
+        };
+        /** CredentialUpdate */
+        CredentialUpdate: {
+            /**
+             * Api Key
+             * Format: password
+             */
+            api_key: string;
+        };
         /** DatabaseStatus */
         DatabaseStatus: {
             /** Detail */
@@ -225,6 +516,21 @@ export interface components {
              */
             status: "ok" | "error" | "not_configured";
         };
+        /** EffectiveRouteOut */
+        EffectiveRouteOut: {
+            /** Issues */
+            issues: string[];
+            /** Label */
+            label: string;
+            model: components["schemas"]["RouteModelOut"] | null;
+            /** Required Capabilities */
+            required_capabilities: string[];
+            /** Source */
+            source: ("override" | "task_route" | "default") | null;
+            task: components["schemas"]["TaskCategory"];
+            /** Warnings */
+            warnings: string[];
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -248,6 +554,133 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /** ModelCreate */
+        ModelCreate: {
+            /** Display Name */
+            display_name?: string | null;
+            /** Model Id */
+            model_id: string;
+        };
+        /** ModelOut */
+        ModelOut: {
+            /** Capabilities */
+            capabilities: {
+                [key: string]: components["schemas"]["CapabilityOut"];
+            };
+            /** Display Name */
+            display_name: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Input Token Limit */
+            input_token_limit: number | null;
+            /** Listed By Provider */
+            listed_by_provider: boolean;
+            /** Model Id */
+            model_id: string;
+            /** Output Token Limit */
+            output_token_limit: number | null;
+            /**
+             * Provider Id
+             * Format: uuid
+             */
+            provider_id: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "discovered" | "manual";
+        };
+        /** ProviderCreate */
+        ProviderCreate: {
+            /** Api Key */
+            api_key?: string | null;
+            /** Base Url */
+            base_url?: string | null;
+            /** Name */
+            name: string;
+            /** Provider Type */
+            provider_type: string;
+        };
+        /** ProviderOut */
+        ProviderOut: {
+            /** Base Url */
+            base_url: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            credential: components["schemas"]["CredentialOut"] | null;
+            /**
+             * Data Location
+             * @enum {string}
+             */
+            data_location: "external" | "local";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Error */
+            last_error: string | null;
+            /** Last Validated At */
+            last_validated_at: string | null;
+            /** Models */
+            models: components["schemas"]["ModelOut"][];
+            /** Name */
+            name: string;
+            /** Provider Display Name */
+            provider_display_name: string;
+            /** Provider Type */
+            provider_type: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "untested" | "connected" | "error";
+        };
+        /** ProviderTypeOut */
+        ProviderTypeOut: {
+            /**
+             * Base Url Mode
+             * @enum {string}
+             */
+            base_url_mode: "none" | "optional" | "required";
+            /**
+             * Data Location
+             * @enum {string}
+             */
+            data_location: "external" | "local";
+            /** Description */
+            description: string;
+            /** Display Name */
+            display_name: string;
+            /** Key Help Url */
+            key_help_url: string | null;
+            /** Milestone */
+            milestone: number | null;
+            /** Requires Api Key */
+            requires_api_key: boolean;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "available" | "planned";
+            /** Supports Model Listing */
+            supports_model_listing: boolean;
+            /** Type Id */
+            type_id: string;
+        };
+        /** ProviderUpdate */
+        ProviderUpdate: {
+            /** Base Url */
+            base_url?: string | null;
+            /** Name */
+            name?: string | null;
         };
         /** ReadyResponse */
         ReadyResponse: {
@@ -273,6 +706,86 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** RouteModelOut */
+        RouteModelOut: {
+            /**
+             * Data Location
+             * @enum {string}
+             */
+            data_location: "external" | "local";
+            /** Display Name */
+            display_name: string;
+            /**
+             * Model Configuration Id
+             * Format: uuid
+             */
+            model_configuration_id: string;
+            /** Model Id */
+            model_id: string;
+            /**
+             * Provider Id
+             * Format: uuid
+             */
+            provider_id: string;
+            /** Provider Name */
+            provider_name: string;
+            /** Provider Type */
+            provider_type: string;
+        };
+        /** RoutingOut */
+        RoutingOut: {
+            /** Daily Request Limit */
+            daily_request_limit: number | null;
+            /** Default Model Id */
+            default_model_id: string | null;
+            /** Effective */
+            effective: components["schemas"]["EffectiveRouteOut"][];
+            /** Fallback Enabled */
+            fallback_enabled: boolean;
+            /** Fallback Model Id */
+            fallback_model_id: string | null;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "simple" | "advanced";
+            /** Requests Today */
+            requests_today: number;
+            /** Store Payload Previews */
+            store_payload_previews: boolean;
+            /** Task Routes */
+            task_routes: {
+                [key: string]: string;
+            };
+        };
+        /** RoutingUpdate */
+        RoutingUpdate: {
+            /** Daily Request Limit */
+            daily_request_limit?: number | null;
+            /** Default Model Id */
+            default_model_id?: string | null;
+            /**
+             * Fallback Enabled
+             * @default false
+             */
+            fallback_enabled: boolean;
+            /** Fallback Model Id */
+            fallback_model_id?: string | null;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "simple" | "advanced";
+            /**
+             * Store Payload Previews
+             * @default true
+             */
+            store_payload_previews: boolean;
+            /** Task Routes */
+            task_routes?: {
+                [key: string]: string | null;
+            };
+        };
         /** SystemStatus */
         SystemStatus: {
             /** App Name */
@@ -294,6 +807,36 @@ export interface components {
             uptime_seconds: number;
             /** Version */
             version: string;
+        };
+        /**
+         * TaskCategory
+         * @enum {string}
+         */
+        TaskCategory: "requirement_analysis" | "test_planning" | "code_generation" | "failure_analysis" | "visual_analysis" | "test_repair" | "report_generation";
+        /** TaskCheckOut */
+        TaskCheckOut: {
+            /** Actual Model */
+            actual_model: string | null;
+            /** Ai Request Id */
+            ai_request_id: string | null;
+            /** Label */
+            label: string;
+            /** Latency Ms */
+            latency_ms: number | null;
+            /** Message */
+            message: string;
+            /** Model */
+            model: string | null;
+            /** Provider Type */
+            provider_type: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "passed" | "failed" | "error";
+            task: components["schemas"]["TaskCategory"];
+            /** Total Tokens */
+            total_tokens: number | null;
         };
         /** TokenResponse */
         TokenResponse: {
@@ -360,6 +903,451 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    delete_model_api_v1_ai_models__model_config_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                model_config_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_provider_types_api_v1_ai_provider_types_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderTypeOut"][];
+                };
+            };
+        };
+    };
+    list_providers_api_v1_ai_providers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderOut"][];
+                };
+            };
+        };
+    };
+    create_provider_api_v1_ai_providers_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProviderCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_provider_api_v1_ai_providers__provider_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_provider_api_v1_ai_providers__provider_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_provider_api_v1_ai_providers__provider_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProviderUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_credential_api_v1_ai_providers__provider_id__credential_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CredentialUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_credential_api_v1_ai_providers__provider_id__credential_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_model_api_v1_ai_providers__provider_id__models_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModelCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_provider_api_v1_ai_providers__provider_id__test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionTestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_ai_requests_api_v1_ai_requests_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIRequestPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_routing_api_v1_ai_routing_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutingOut"];
+                };
+            };
+        };
+    };
+    update_routing_api_v1_ai_routing_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoutingUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_task_route_api_v1_ai_routing_check__task__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task: components["schemas"]["TaskCategory"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskCheckOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_audit_logs_api_v1_audit_logs_get: {
         parameters: {
             query?: {

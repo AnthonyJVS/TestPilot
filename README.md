@@ -6,8 +6,9 @@ Describe a test in plain language. TestPilot turns it into a structured, reviewa
 plan, executes it in an isolated browser, streams every step live, and explains failures —
 using one AI provider (a single Gemini key is enough) or several, routed per task.
 
-> **Project status: Milestone 1 (foundation) of 8.** Authentication, the application shell,
-> the dashboard and the Docker stack work today. AI providers, test generation, browser
+> **Project status: Milestone 2 (multi-LLM foundation) of 8.** Authentication, the
+> application shell, the dashboard, the Docker stack and the AI provider layer (Gemini,
+> Claude, OpenAI with Simple/Advanced routing) work today. Test generation, browser
 > execution, Workflow Studio and the Execution Center are designed and scheduled — they are
 > labelled *Planned* in the UI and nothing about them is simulated.
 > See the [roadmap](docs/DEVELOPMENT_ROADMAP.md).
@@ -19,7 +20,7 @@ using one AI provider (a single Gemini key is enough) or several, routed per tas
 | Accounts: registration, sign-in, rotating refresh sessions, sign-out, audit log | ✅ Milestone 1 |
 | Dashboard with live system status and account activity | ✅ Milestone 1 |
 | Dark (default) and light themes, responsive layout | ✅ Milestone 1 |
-| Multi-LLM providers: Simple mode (one key) and Advanced per-task routing | Planned — M2 |
+| Multi-LLM: Gemini, Claude, OpenAI; Simple mode (one key) and Advanced per-task routing; encrypted keys; model discovery and manual IDs; routing checks; explicit fallback; daily limits; AI request log | ✅ Milestone 2 |
 | Testing Workspace: projects, scenarios, editable AI test plans, Playwright code | Planned — M3 |
 | Isolated browser execution (Chromium, Firefox, WebKit), artifacts, history | Planned — M4 |
 | Workflow Studio: n8n-style node editor with DAG execution | Planned — M5 |
@@ -116,6 +117,7 @@ All variables are documented in [.env.example](.env.example). The important ones
 | `DATABASE_URL` | SQLAlchemy async URL | SQLite file in `backend/data/` |
 | `REDIS_URL` | Redis for rate limiting (and queues from M4) | unset (in-memory, dev only) |
 | `JWT_SECRET` | HS256 signing key, ≥ 32 characters | ephemeral in development |
+| `ENCRYPTION_KEYS` | AES-256-GCM keys for stored AI provider keys (`v1:<base64url>`, comma-separated for rotation) | local key file in development; required in production |
 | `COOKIE_SECURE` | Send the refresh cookie only over HTTPS | `true` (compose: `false` for localhost) |
 | `ALLOW_REGISTRATION` | Allow self-service sign-up | `true` |
 | `ENABLE_API_DOCS` | Serve Swagger UI at `/api/docs` | `true` |

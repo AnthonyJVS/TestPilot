@@ -3,11 +3,12 @@ from __future__ import annotations
 import httpx
 from alembic.autogenerate import compare_metadata
 from alembic.runtime.migration import MigrationContext
+from alembic.script import ScriptDirectory
 from sqlalchemy import Connection
 
 from app.infrastructure.database.base import Base
 from app.infrastructure.database.session import create_engine
-from tests.conftest import bearer, register
+from tests.conftest import alembic_config, bearer, register
 
 
 async def test_liveness(client: httpx.AsyncClient) -> None:
@@ -40,7 +41,8 @@ async def test_system_status_requires_auth_and_reports_migration(client: httpx.A
     assert response.status_code == 200
     body = response.json()
     assert body["database"]["status"] == "ok"
-    assert body["database"]["migration_revision"] == "0001"
+    head = ScriptDirectory.from_config(alembic_config("sqlite://")).get_current_head()
+    assert body["database"]["migration_revision"] == head
     assert body["redis"]["status"] == "not_configured"
     assert body["rate_limiter_backend"] == "in_memory"
     assert body["environment"] == "test"

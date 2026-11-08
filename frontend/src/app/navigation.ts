@@ -75,15 +75,8 @@ export const NAV_ITEMS: NavItem[] = [
     path: "/ai-providers",
     label: "AI Providers",
     icon: Bot,
-    status: "planned",
-    milestone: 2,
+    status: "available",
     summary: "Connect one AI provider or several, and choose which model handles each task.",
-    plannedCapabilities: [
-      "Simple mode: one key (for example Gemini) powers every AI task",
-      "Advanced mode: a different provider and model per task",
-      "Connection tests, model discovery and manual model IDs",
-      "Keys encrypted at rest and never shown again after saving",
-    ],
   },
   {
     path: "/reports",

@@ -45,6 +45,8 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-testpilot}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-testpilot}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (at least 32 characters)}
+      # AES-256-GCM keys for stored AI provider credentials: "v1:<base64url 32 bytes>[,old...]".
+      ENCRYPTION_KEYS: ${ENCRYPTION_KEYS:?Set ENCRYPTION_KEYS in .env (see .env.example)}
       # Plain-HTTP localhost demo. Set COOKIE_SECURE=true whenever TestPilot is served over HTTPS.
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}

@@ -6,7 +6,17 @@ Please do not open public issues for security problems. Contact the maintainer p
 with a description, reproduction steps and impact. You will get an acknowledgement and a
 fix timeline.
 
-## What is implemented (Milestone 1)
+## What is implemented (Milestones 1–2)
+
+| AI control (M2) | Implementation |
+| --- | --- |
+| Provider keys at rest | AES-256-GCM, versioned keys (`ENCRYPTION_KEYS`), ciphertext bound to its row via associated data; only a 4-character hint is ever returned |
+| Key lifecycle | Write-only API; rotate and delete endpoints; audit events for create, rotate, delete, test |
+| Custom endpoints | HTTPS only, no embedded credentials, must resolve to public addresses (blocks loopback, private ranges, link-local/metadata) |
+| Prompts | Page/user content wrapped as untrusted data with a standing instruction to ignore embedded instructions; outputs validated against schemas |
+| Payload storage | Sanitized (redacted, truncated) previews, optional per user ("Keep sanitized prompt and response copies") |
+| Provider switching | Never silent: fallback is opt-in, limited to transient/quota errors and recorded |
+| Cost control | Optional daily AI request limit pauses AI work; bounded retries; long rate-limit waits are surfaced, not slept on |
 
 | Control | Implementation |
 | --- | --- |
@@ -27,7 +37,7 @@ fix timeline.
 ## Planned controls
 
 Tracked in [docs/ARCHITECTURE.md §6](docs/ARCHITECTURE.md#6-security-risks-and-mitigations):
-encrypted AI credentials (M2), secret references kept out of AI prompts (M2–M4), browser
+secret references kept out of AI prompts (M3–M4), browser
 worker sandbox with SSRF protection and egress limits (M4), prompt-injection controls
 (M3–M7), payload redaction in the Execution Center (M6), usage limits (M2/M8).
 

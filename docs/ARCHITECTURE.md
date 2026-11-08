@@ -9,7 +9,8 @@
 | Backend foundation, auth, migrations, health, audit log | Implemented (M1) |
 | Frontend shell, navigation, auth pages, dashboard | Implemented (M1) |
 | Docker Compose (postgres, redis, backend, frontend) | Implemented (M1), Docker run pending verification on a Docker host |
-| Multi-LLM layer | Design (M2) |
+| Multi-LLM layer: Gemini, Claude, OpenAI adapters, encryption, routing, request log, AI Providers page | Implemented (M2); positive live call pending a real API key |
+| Additional providers (DeepSeek, Mistral, xAI, OpenRouter, Azure, Bedrock, Ollama, LM Studio) | Planned (M8), shown as unavailable |
 | Testing Workspace / test generation | Design (M3) |
 | Browser execution worker | Design (M4) |
 | Workflow Studio + DAG engine | Design (M5) |

@@ -6,6 +6,7 @@ the same suite against PostgreSQL. The schema is created with the real Alembic m
 
 from __future__ import annotations
 
+import base64
 import os
 import tempfile
 from collections.abc import AsyncIterator, Callable, Iterator
@@ -23,6 +24,7 @@ from app.core.config import Settings
 from app.infrastructure.database.base import Base
 from app.infrastructure.database.session import create_engine
 from app.main import create_app
+from app.services.ai.registry import ProviderRegistry
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 CLIENT_IP = "203.0.113.10"
@@ -54,12 +56,16 @@ def migrated_database(database_url: str) -> None:
     command.upgrade(cfg, "head")
 
 
+TEST_ENCRYPTION_KEYS = "t1:" + base64.urlsafe_b64encode(b"k" * 32).decode()
+
+
 def make_settings(database_url: str, **overrides: Any) -> Settings:
     values: dict[str, Any] = {
         "app_env": "test",
         "database_url": database_url,
         "redis_url": None,
         "jwt_secret": "test-secret-" + "x" * 40,
+        "encryption_keys": TEST_ENCRYPTION_KEYS,
         "cookie_secure": False,
         "log_format": "console",
         "log_level": "WARNING",
@@ -80,13 +86,23 @@ async def _clean_tables(database_url: str) -> AsyncIterator[None]:
 
 ClientFactory = Callable[..., AbstractAsyncContextManager[httpx.AsyncClient]]
 
+SLEEPS: list[float] = []
+
+
+async def _record_sleep(seconds: float) -> None:
+    """Retries never really sleep in tests; the requested waits are recorded instead."""
+    SLEEPS.append(seconds)
+
 
 @pytest.fixture
 def client_factory(database_url: str, _clean_tables: None) -> ClientFactory:
     @asynccontextmanager
-    async def factory(ip: str = CLIENT_IP, **overrides: Any) -> AsyncIterator[httpx.AsyncClient]:
-        app = create_app(make_settings(database_url, **overrides))
+    async def factory(
+        ip: str = CLIENT_IP, registry: ProviderRegistry | None = None, **overrides: Any
+    ) -> AsyncIterator[httpx.AsyncClient]:
+        app = create_app(make_settings(database_url, **overrides), provider_registry=registry)
         async with app.router.lifespan_context(app):
+            app.state.ai_sleep = _record_sleep
             transport = httpx.ASGITransport(app=app, client=(ip, 50000))
             async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as c:
                 yield c

@@ -1,9 +1,34 @@
 # AI Provider Integration
 
-> Status: **Design** — delivered in Milestone 2. Provider APIs, SDK versions,
-> model IDs and capabilities will be verified against current official
-> documentation at implementation time; nothing below is a claim of support
-> until the adapter has been tested and this document updated.
+> Status: **Implemented (Milestone 2)** for Google Gemini, Anthropic Claude and
+> OpenAI. The other eight providers are listed in the catalog as *planned*
+> (milestone 8) and cannot be selected.
+
+## 0. Implementation status and verification
+
+| Provider | SDK (pinned) | Adapter | Mock-HTTP tests | Live check |
+| --- | --- | --- | --- | --- |
+| Google Gemini | `google-genai==3.0.0` | `services/ai/providers/gemini.py` | request format, model listing, quota vs rate-limit vs auth vs 5xx mapping, safety blocks | Invalid key → *"Gemini rejected the API key"* against the live API (2026-11-08). A positive run with a real key is pending. |
+| Anthropic Claude | `anthropic==2.6.0` | `.../anthropic.py` | `output_config` structured output, image blocks, capability metadata, 401/429/529 mapping | Invalid key → auth error against the live API (2026-11-08). |
+| OpenAI | `openai==3.46.0` | `.../openai.py` | `response_format=json_schema`, data-URL images, non-chat model filtering, quota vs rate-limit mapping | Invalid key → auth error against the live API (2026-11-08). |
+
+Facts verified against the installed SDK source (not assumed):
+
+- All three SDKs now use **`httpx2`**; tests inject `httpx2.MockTransport`.
+- Gemini: `GenerateContentConfig.response_json_schema` accepts raw JSON
+  Schema; inline image fields serialise as `inlineData.mime_type`; `models.list`
+  returns `supported_actions` and token limits but **no modality information**,
+  so vision is `unknown` until a routing check proves it.
+- Anthropic 2.x sends the key as `Authorization: Bearer`; native structured
+  output is `output_config={"format": {"type": "json_schema", "schema": …}}`;
+  `models.list` reports `capabilities.image_input` and
+  `capabilities.structured_outputs`, which TestPilot stores as provider
+  metadata. `EnforcedSpendLimitReachedError` is a `RateLimitError` subclass and is
+  mapped to quota exhaustion.
+- OpenAI: `models.list` has no capability data; embedding/speech/image models
+  are hidden from the picker (any ID can still be added manually).
+- SDK-level retries are disabled (`max_retries=0` / one attempt) so the
+  orchestrator owns and records every attempt.
 
 ## 1. Layers
 
@@ -62,6 +87,18 @@ with `retry_after`), `QuotaExhaustedError` (pause), `ProviderUnavailableError`
 
 Before a run, the router checks that each resolved model has the required
 capabilities and reports gaps (e.g. "Visual Analysis needs image input").
+Capabilities marked *unsupported* block the route; *unknown* ones produce a
+warning.
+
+### Routing check
+
+`POST /api/v1/ai/routing/check/{task}` makes one small, real structured call for
+the task's route (a requirement list, a two-step plan, a Playwright line, a
+failure category, the colour of a generated red PNG, a repaired locator, a
+one-line summary) and verifies the answer in Python. Results are recorded in
+`ai_requests` and become capability evidence (`source: "probe"`): text,
+native structured output and — via the image check — vision. The UI runs the
+checks sequentially to stay inside free-tier per-minute limits.
 
 ## 4. Model catalog
 
@@ -95,7 +132,27 @@ the model is instructed to ignore instructions found in it.
 
 ## 7. Credential storage
 
-AES-256-GCM with a master key from the environment
-(`TESTPILOT_ENCRYPTION_KEYS`, versioned to allow rotation). Ciphertext, nonce
-and key version are stored in `ai_credentials`; keys are write-only through
-the API and decrypted only in the orchestrator immediately before a call.
+AES-256-GCM (`app/core/crypto.py`) with versioned keys from `ENCRYPTION_KEYS`
+(`v2:<key>,v1:<key>` — the first encrypts, all decrypt). Associated data binds
+each ciphertext to its connection row (`ai_provider:<id>`), so a ciphertext
+copied to another row fails authentication. Ciphertext, nonce and key ID are
+stored in `ai_credentials` with a 4-character hint; keys are write-only through
+the API and decrypted only when a provider client is built for a call.
+Development without `ENCRYPTION_KEYS` uses a generated key file in
+`backend/data/`; production refuses to start without the variable.
+
+Custom endpoint URLs (OpenAI-compatible base URL) must be HTTPS, contain no
+credentials and resolve only to public addresses (SSRF protection).
+
+## 8. API
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /ai/provider-types` | Catalog with availability, data location (external/local), key help link |
+| `GET/POST /ai/providers`, `GET/PATCH/DELETE /ai/providers/{id}` | Connections (key write-only) |
+| `PUT/DELETE /ai/providers/{id}/credential` | Rotate or delete the key |
+| `POST /ai/providers/{id}/test` | List models (no generation quota), refresh catalog, update status |
+| `POST /ai/providers/{id}/models`, `DELETE /ai/models/{id}` | Manual model IDs |
+| `GET/PUT /ai/routing` | Mode, default, per-task routes, fallback, daily limit, payload previews; effective route per task with issues/warnings |
+| `POST /ai/routing/check/{task}` | Real minimal call for one task |
+| `GET /ai/requests` | AI request log (requested vs actual model, attempts, tokens, latency, sanitized payloads) |

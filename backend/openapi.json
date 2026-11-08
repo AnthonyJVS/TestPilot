@@ -1,6 +1,276 @@
 {
   "components": {
     "schemas": {
+      "AIRequestOut": {
+        "properties": {
+          "actual_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Model"
+          },
+          "actual_provider_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Provider Type"
+          },
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "fallback_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Reason"
+          },
+          "fallback_used": {
+            "title": "Fallback Used",
+            "type": "boolean"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "input_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Tokens"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms"
+          },
+          "origin": {
+            "title": "Origin",
+            "type": "string"
+          },
+          "output_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Tokens"
+          },
+          "provider_request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Request Id"
+          },
+          "request_preview": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Preview"
+          },
+          "requested_model": {
+            "title": "Requested Model",
+            "type": "string"
+          },
+          "requested_provider_type": {
+            "title": "Requested Provider Type",
+            "type": "string"
+          },
+          "response_preview": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Preview"
+          },
+          "retry_history": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Retry History",
+            "type": "array"
+          },
+          "route_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Source"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "task": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task"
+          },
+          "total_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Tokens"
+          }
+        },
+        "required": [
+          "id",
+          "task",
+          "origin",
+          "route_source",
+          "requested_provider_type",
+          "requested_model",
+          "actual_provider_type",
+          "actual_model",
+          "provider_request_id",
+          "status",
+          "error_code",
+          "error_message",
+          "attempts",
+          "fallback_used",
+          "fallback_reason",
+          "retry_history",
+          "input_tokens",
+          "output_tokens",
+          "total_tokens",
+          "latency_ms",
+          "request_preview",
+          "response_preview",
+          "started_at",
+          "finished_at"
+        ],
+        "title": "AIRequestOut",
+        "type": "object"
+      },
+      "AIRequestPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AIRequestOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "AIRequestPage",
+        "type": "object"
+      },
       "AuditLogOut": {
         "properties": {
           "action": {
@@ -113,6 +383,117 @@
         "title": "AuditLogPage",
         "type": "object"
       },
+      "CapabilityOut": {
+        "properties": {
+          "source": {
+            "enum": [
+              "provider_metadata",
+              "probe",
+              "none"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "supported",
+              "unsupported",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "source"
+        ],
+        "title": "CapabilityOut",
+        "type": "object"
+      },
+      "ConnectionTestOut": {
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "model_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Count"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/ProviderOut"
+          }
+        },
+        "required": [
+          "ok",
+          "message",
+          "model_count",
+          "provider"
+        ],
+        "title": "ConnectionTestOut",
+        "type": "object"
+      },
+      "CredentialOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "key_hint": {
+            "title": "Key Hint",
+            "type": "string"
+          },
+          "rotated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rotated At"
+          }
+        },
+        "required": [
+          "key_hint",
+          "created_at",
+          "rotated_at"
+        ],
+        "title": "CredentialOut",
+        "type": "object"
+      },
+      "CredentialUpdate": {
+        "properties": {
+          "api_key": {
+            "format": "password",
+            "maxLength": 500,
+            "minLength": 8,
+            "title": "Api Key",
+            "type": "string",
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "api_key"
+        ],
+        "title": "CredentialUpdate",
+        "type": "object"
+      },
       "DatabaseStatus": {
         "properties": {
           "detail": {
@@ -209,6 +590,75 @@
         "title": "DependencyStatus",
         "type": "object"
       },
+      "EffectiveRouteOut": {
+        "properties": {
+          "issues": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RouteModelOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "required_capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Required Capabilities",
+            "type": "array"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "enum": [
+                  "override",
+                  "task_route",
+                  "default"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "task": {
+            "$ref": "#/components/schemas/TaskCategory"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "task",
+          "label",
+          "source",
+          "model",
+          "required_capabilities",
+          "issues",
+          "warnings"
+        ],
+        "title": "EffectiveRouteOut",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -254,6 +704,384 @@
           "password"
         ],
         "title": "LoginRequest",
+        "type": "object"
+      },
+      "ModelCreate": {
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "model_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:/@+-]+$",
+            "title": "Model Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_id"
+        ],
+        "title": "ModelCreate",
+        "type": "object"
+      },
+      "ModelOut": {
+        "properties": {
+          "capabilities": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CapabilityOut"
+            },
+            "title": "Capabilities",
+            "type": "object"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "input_token_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Token Limit"
+          },
+          "listed_by_provider": {
+            "title": "Listed By Provider",
+            "type": "boolean"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "output_token_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Token Limit"
+          },
+          "provider_id": {
+            "format": "uuid",
+            "title": "Provider Id",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "discovered",
+              "manual"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "provider_id",
+          "model_id",
+          "display_name",
+          "source",
+          "capabilities",
+          "input_token_limit",
+          "output_token_limit",
+          "listed_by_provider"
+        ],
+        "title": "ModelOut",
+        "type": "object"
+      },
+      "ProviderCreate": {
+        "properties": {
+          "api_key": {
+            "anyOf": [
+              {
+                "format": "password",
+                "maxLength": 500,
+                "type": "string",
+                "writeOnly": true
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "provider_type": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Provider Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_type",
+          "name"
+        ],
+        "title": "ProviderCreate",
+        "type": "object"
+      },
+      "ProviderOut": {
+        "properties": {
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "credential": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CredentialOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "data_location": {
+            "enum": [
+              "external",
+              "local"
+            ],
+            "title": "Data Location",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "last_validated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Validated At"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ModelOut"
+            },
+            "title": "Models",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "provider_display_name": {
+            "title": "Provider Display Name",
+            "type": "string"
+          },
+          "provider_type": {
+            "title": "Provider Type",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "untested",
+              "connected",
+              "error"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "provider_type",
+          "provider_display_name",
+          "data_location",
+          "name",
+          "base_url",
+          "status",
+          "last_validated_at",
+          "last_error",
+          "credential",
+          "models",
+          "created_at"
+        ],
+        "title": "ProviderOut",
+        "type": "object"
+      },
+      "ProviderTypeOut": {
+        "properties": {
+          "base_url_mode": {
+            "enum": [
+              "none",
+              "optional",
+              "required"
+            ],
+            "title": "Base Url Mode",
+            "type": "string"
+          },
+          "data_location": {
+            "enum": [
+              "external",
+              "local"
+            ],
+            "title": "Data Location",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "key_help_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key Help Url"
+          },
+          "milestone": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Milestone"
+          },
+          "requires_api_key": {
+            "title": "Requires Api Key",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "available",
+              "planned"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "supports_model_listing": {
+            "title": "Supports Model Listing",
+            "type": "boolean"
+          },
+          "type_id": {
+            "title": "Type Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type_id",
+          "display_name",
+          "description",
+          "status",
+          "data_location",
+          "requires_api_key",
+          "base_url_mode",
+          "supports_model_listing",
+          "key_help_url",
+          "milestone"
+        ],
+        "title": "ProviderTypeOut",
+        "type": "object"
+      },
+      "ProviderUpdate": {
+        "properties": {
+          "base_url": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "title": "ProviderUpdate",
         "type": "object"
       },
       "ReadyResponse": {
@@ -315,6 +1143,224 @@
         "title": "RegisterRequest",
         "type": "object"
       },
+      "RouteModelOut": {
+        "properties": {
+          "data_location": {
+            "enum": [
+              "external",
+              "local"
+            ],
+            "title": "Data Location",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "model_configuration_id": {
+            "format": "uuid",
+            "title": "Model Configuration Id",
+            "type": "string"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "provider_id": {
+            "format": "uuid",
+            "title": "Provider Id",
+            "type": "string"
+          },
+          "provider_name": {
+            "title": "Provider Name",
+            "type": "string"
+          },
+          "provider_type": {
+            "title": "Provider Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_configuration_id",
+          "model_id",
+          "display_name",
+          "provider_id",
+          "provider_name",
+          "provider_type",
+          "data_location"
+        ],
+        "title": "RouteModelOut",
+        "type": "object"
+      },
+      "RoutingOut": {
+        "properties": {
+          "daily_request_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Request Limit"
+          },
+          "default_model_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Model Id"
+          },
+          "effective": {
+            "items": {
+              "$ref": "#/components/schemas/EffectiveRouteOut"
+            },
+            "title": "Effective",
+            "type": "array"
+          },
+          "fallback_enabled": {
+            "title": "Fallback Enabled",
+            "type": "boolean"
+          },
+          "fallback_model_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Model Id"
+          },
+          "mode": {
+            "enum": [
+              "simple",
+              "advanced"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "requests_today": {
+            "title": "Requests Today",
+            "type": "integer"
+          },
+          "store_payload_previews": {
+            "title": "Store Payload Previews",
+            "type": "boolean"
+          },
+          "task_routes": {
+            "additionalProperties": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Task Routes",
+            "type": "object"
+          }
+        },
+        "required": [
+          "mode",
+          "default_model_id",
+          "task_routes",
+          "fallback_enabled",
+          "fallback_model_id",
+          "daily_request_limit",
+          "store_payload_previews",
+          "requests_today",
+          "effective"
+        ],
+        "title": "RoutingOut",
+        "type": "object"
+      },
+      "RoutingUpdate": {
+        "properties": {
+          "daily_request_limit": {
+            "anyOf": [
+              {
+                "maximum": 100000.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Request Limit"
+          },
+          "default_model_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Model Id"
+          },
+          "fallback_enabled": {
+            "default": false,
+            "title": "Fallback Enabled",
+            "type": "boolean"
+          },
+          "fallback_model_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Model Id"
+          },
+          "mode": {
+            "enum": [
+              "simple",
+              "advanced"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "store_payload_previews": {
+            "default": true,
+            "title": "Store Payload Previews",
+            "type": "boolean"
+          },
+          "task_routes": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/TaskCategory"
+            },
+            "title": "Task Routes",
+            "type": "object"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "RoutingUpdate",
+        "type": "object"
+      },
       "SystemStatus": {
         "properties": {
           "app_name": {
@@ -365,6 +1411,124 @@
           "registration_enabled"
         ],
         "title": "SystemStatus",
+        "type": "object"
+      },
+      "TaskCategory": {
+        "enum": [
+          "requirement_analysis",
+          "test_planning",
+          "code_generation",
+          "failure_analysis",
+          "visual_analysis",
+          "test_repair",
+          "report_generation"
+        ],
+        "title": "TaskCategory",
+        "type": "string"
+      },
+      "TaskCheckOut": {
+        "properties": {
+          "actual_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Model"
+          },
+          "ai_request_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Request Id"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "provider_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Type"
+          },
+          "status": {
+            "enum": [
+              "passed",
+              "failed",
+              "error"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "task": {
+            "$ref": "#/components/schemas/TaskCategory"
+          },
+          "total_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Tokens"
+          }
+        },
+        "required": [
+          "task",
+          "label",
+          "status",
+          "message",
+          "provider_type",
+          "model",
+          "actual_model",
+          "latency_ms",
+          "total_tokens",
+          "ai_request_id"
+        ],
+        "title": "TaskCheckOut",
         "type": "object"
       },
       "TokenResponse": {
@@ -506,6 +1670,688 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/ai/models/{model_config_id}": {
+      "delete": {
+        "operationId": "delete_model_api_v1_ai_models__model_config_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "model_config_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Model Config Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Model",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/provider-types": {
+      "get": {
+        "operationId": "list_provider_types_api_v1_ai_provider_types_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProviderTypeOut"
+                  },
+                  "title": "Response List Provider Types Api V1 Ai Provider Types Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Provider Types",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/providers": {
+      "get": {
+        "operationId": "list_providers_api_v1_ai_providers_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProviderOut"
+                  },
+                  "title": "Response List Providers Api V1 Ai Providers Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Providers",
+        "tags": [
+          "ai"
+        ]
+      },
+      "post": {
+        "operationId": "create_provider_api_v1_ai_providers_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Provider",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/providers/{provider_id}": {
+      "delete": {
+        "operationId": "delete_provider_api_v1_ai_providers__provider_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Provider Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Provider",
+        "tags": [
+          "ai"
+        ]
+      },
+      "get": {
+        "operationId": "get_provider_api_v1_ai_providers__provider_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Provider Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Provider",
+        "tags": [
+          "ai"
+        ]
+      },
+      "patch": {
+        "operationId": "update_provider_api_v1_ai_providers__provider_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Provider Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Provider",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/providers/{provider_id}/credential": {
+      "delete": {
+        "operationId": "delete_credential_api_v1_ai_providers__provider_id__credential_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Provider Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Credential",
+        "tags": [
+          "ai"
+        ]
+      },
+      "put": {
+        "operationId": "set_credential_api_v1_ai_providers__provider_id__credential_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Provider Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Set Credential",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/providers/{provider_id}/models": {
+      "post": {
+        "operationId": "add_model_api_v1_ai_providers__provider_id__models_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Provider Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Add Model",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/providers/{provider_id}/test": {
+      "post": {
+        "operationId": "test_provider_api_v1_ai_providers__provider_id__test_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Provider Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionTestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Test Provider",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/requests": {
+      "get": {
+        "operationId": "list_ai_requests_api_v1_ai_requests_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIRequestPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Ai Requests",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/routing": {
+      "get": {
+        "operationId": "get_routing_api_v1_ai_routing_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Routing",
+        "tags": [
+          "ai"
+        ]
+      },
+      "put": {
+        "operationId": "update_routing_api_v1_ai_routing_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoutingUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Routing",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/routing/check/{task}": {
+      "post": {
+        "description": "Runs one real, minimal AI call for the task's route. Spends provider quota.",
+        "operationId": "check_task_route_api_v1_ai_routing_check__task__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/TaskCategory"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskCheckOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Check Task Route",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
     "/api/v1/audit-logs": {
       "get": {
         "operationId": "list_audit_logs_api_v1_audit_logs_get",

@@ -16,6 +16,20 @@ export type DatabaseStatus = Schemas["DatabaseStatus"];
 export type AuditLogEntry = Schemas["AuditLogOut"];
 export type AuditLogPage = Schemas["AuditLogPage"];
 
+export type ProviderType = Schemas["ProviderTypeOut"];
+export type Provider = Schemas["ProviderOut"];
+export type ProviderCreate = Schemas["ProviderCreate"];
+export type AIModel = Schemas["ModelOut"];
+export type Capability = Schemas["CapabilityOut"];
+export type ConnectionTest = Schemas["ConnectionTestOut"];
+export type Routing = Schemas["RoutingOut"];
+export type RoutingUpdate = Schemas["RoutingUpdate"];
+export type EffectiveRoute = Schemas["EffectiveRouteOut"];
+export type TaskCategory = Schemas["EffectiveRouteOut"]["task"];
+export type TaskCheck = Schemas["TaskCheckOut"];
+export type AIRequestEntry = Schemas["AIRequestOut"];
+export type AIRequestPage = Schemas["AIRequestPage"];
+
 /** The error envelope every backend failure uses. */
 export interface ApiErrorBody {
   error: {
