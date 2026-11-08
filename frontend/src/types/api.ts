@@ -30,6 +30,23 @@ export type TaskCheck = Schemas["TaskCheckOut"];
 export type AIRequestEntry = Schemas["AIRequestOut"];
 export type AIRequestPage = Schemas["AIRequestPage"];
 
+export type ProjectSummary = Schemas["ProjectSummaryOut"];
+export type Project = Schemas["ProjectOut"];
+export type ProjectCreate = Schemas["ProjectCreate"];
+export type ProjectUpdate = Schemas["ProjectUpdate"];
+export type Environment = Schemas["EnvironmentOut"];
+export type Variable = Schemas["VariableOut"];
+export type Suite = Schemas["SuiteOut"];
+export type CaseSummary = Schemas["CaseSummaryOut"];
+export type TestCase = Schemas["CaseOut"];
+export type PlanRecord = Schemas["PlanOut"];
+export type PlanIssue = Schemas["PlanIssueOut"];
+export type TestPlan = Schemas["TestPlan"];
+export type TestDataRef = Schemas["TestDataRef"];
+export type PlanStep = Schemas["Step"];
+export type PlanLocator = Schemas["Locator"];
+export type TestVersion = Schemas["VersionOut"];
+
 /** The error envelope every backend failure uses. */
 export interface ApiErrorBody {
   error: {

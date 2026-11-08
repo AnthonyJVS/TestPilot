@@ -18,6 +18,15 @@ fix timeline.
 | Provider switching | Never silent: fallback is opt-in, limited to transient/quota errors and recorded |
 | Cost control | Optional daily AI request limit pauses AI work; bounded retries; long rate-limit waits are surfaced, not slept on |
 
+| Testing control (M3) | Implementation |
+| --- | --- |
+| Test secrets | Environment secrets AES-GCM encrypted (bound to environment + name), write-only, audited; never returned, never in plans or generated code |
+| AI exposure | Only variable **names** reach AI prompts; scenario text is wrapped as untrusted data |
+| No generated code execution | AI output is a schema-validated plan in a closed action set; code is rendered deterministically from the approved plan |
+| Navigation scope | `goto` targets outside the project's allowed domains are errors that block approval (network-level enforcement follows in M4) |
+| Secret placement | Secrets may only be typed into fields (`fill`/`select_option`), never asserted on or placed in URLs/screenshot names |
+| Immutability | Approved versions cannot be edited; changes create new drafts and new versions |
+
 | Control | Implementation |
 | --- | --- |
 | Password storage | Argon2id (argon2-cffi defaults, RFC 9106 profile), automatic rehash on login when parameters change; 12–128 character passwords, not equal to the email |

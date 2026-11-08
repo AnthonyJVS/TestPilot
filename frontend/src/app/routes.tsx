@@ -8,6 +8,11 @@ import { RegisterPage } from "@/features/auth/RegisterPage";
 import { DashboardPage } from "@/features/dashboard/DashboardPage";
 import { NotFoundPage } from "@/features/not-found/NotFoundPage";
 import { PlannedPage } from "@/features/planned/PlannedPage";
+import { EnvironmentsTab } from "@/features/projects/EnvironmentsTab";
+import { ProjectLayout } from "@/features/projects/ProjectLayout";
+import { ProjectsPage } from "@/features/projects/ProjectsPage";
+import { SettingsTab } from "@/features/projects/SettingsTab";
+import { TestsTab } from "@/features/projects/TestsTab";
 import { SettingsPage } from "@/features/settings/SettingsPage";
 
 import { NAV_ITEMS } from "./navigation";
@@ -36,6 +41,17 @@ export const routes: RouteObject[] = [
             element: <AppShell />,
             children: [
               { index: true, element: <DashboardPage /> },
+              { path: "projects", element: <ProjectsPage /> },
+              {
+                path: "projects/:projectId",
+                element: <ProjectLayout />,
+                children: [
+                  { index: true, element: <TestsTab /> },
+                  { path: "tests/:caseId", element: <TestsTab /> },
+                  { path: "environments", element: <EnvironmentsTab /> },
+                  { path: "settings", element: <SettingsTab /> },
+                ],
+              },
               { path: "ai-providers", element: <AiProvidersPage /> },
               { path: "settings", element: <SettingsPage /> },
               ...plannedRoutes,

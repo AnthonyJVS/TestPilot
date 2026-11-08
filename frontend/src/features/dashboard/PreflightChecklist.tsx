@@ -2,6 +2,7 @@ import { Check } from "lucide-react";
 import { Link } from "react-router";
 
 import { useProviders, useRouting } from "@/features/ai-providers/api";
+import { useProjects } from "@/features/projects/api";
 import { cn } from "@/lib/utils";
 
 interface Step {
@@ -16,9 +17,12 @@ interface Step {
 export function PreflightChecklist() {
   const providers = useProviders();
   const routing = useRouting();
+  const projects = useProjects();
   const aiReady =
     Boolean(providers.data?.some((p) => p.status === "connected")) &&
     Boolean(routing.data?.effective.some((r) => r.model && r.issues.length === 0));
+  const hasProject = (projects.data?.length ?? 0) > 0;
+  const hasApproved = Boolean(projects.data?.some((p) => p.approved_count > 0));
 
   const steps: Step[] = [
     { title: "Create your account", description: "Signed in and protected by a rotating session.", done: true },
@@ -30,12 +34,19 @@ export function PreflightChecklist() {
       done: aiReady,
       to: "/ai-providers",
     },
-    { title: "Create a project", description: "Add the site you want to test and its environments.", done: false, milestone: 3 },
+    {
+      title: "Create a project",
+      description: "Add the site you want to test and its environments.",
+      done: hasProject,
+      to: "/projects",
+    },
     {
       title: "Describe a scenario and approve the plan",
-      description: "Write the test in plain language, then review the steps.",
-      done: false,
-      milestone: 3,
+      description: hasApproved
+        ? "At least one test has an approved version."
+        : "Write the test in plain language, then review the steps.",
+      done: hasApproved,
+      to: "/projects",
     },
     {
       title: "Run the test and watch it live",

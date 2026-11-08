@@ -32,16 +32,9 @@ export const NAV_ITEMS: NavItem[] = [
     path: "/projects",
     label: "Projects",
     icon: FolderKanban,
-    status: "planned",
-    milestone: 3,
+    status: "available",
     summary:
       "One project per website you test, with environments such as staging and production.",
-    plannedCapabilities: [
-      "Target URL, allowed domains and environments with encrypted test credentials",
-      "Describe a scenario in plain language and get a structured test plan",
-      "Review, edit and approve the plan before anything runs",
-      "Read the Playwright code generated from the approved plan",
-    ],
   },
   {
     path: "/workflows",

@@ -35,6 +35,51 @@ CHECK_ANSWERS: dict[str, dict[str, Any]] = {
     "ColourAnswer": {"colour": "red"},
     "LocatorProposal": {"locator": 'page.get_by_role("button", name="Log in")'},
     "OneLineSummary": {"summary": "Three tests passed; checkout total mismatch failed."},
+    "RequirementAnalysis": {
+        "summary": "A registered user signs in and sees the dashboard.",
+        "requirements": [
+            "The login page opens",
+            "Valid credentials sign the user in",
+            "The dashboard greets the user",
+        ],
+        "test_data": [
+            {"name": "LOGIN_EMAIL", "kind": "env", "description": "Test account email"},
+            {"name": "LOGIN_PASSWORD", "kind": "secret", "description": "Test account password"},
+        ],
+        "ambiguities": [],
+    },
+    "TestPlan": {
+        "name": "Sign in and see the dashboard",
+        "description": "A registered user signs in.",
+        "preconditions": ["A test account exists"],
+        "test_data": [
+            {"name": "LOGIN_EMAIL", "kind": "env", "description": "Test account email"},
+            {"name": "LOGIN_PASSWORD", "kind": "secret", "description": "Test account password"},
+        ],
+        "steps": [
+            {"action": "goto", "description": "Open the login page", "value": "/login"},
+            {
+                "action": "fill",
+                "description": "Enter the email",
+                "locator": {"strategy": "label", "value": "Email"},
+                "value": "{{env.LOGIN_EMAIL}}",
+            },
+            {
+                "action": "fill",
+                "description": "Enter the password",
+                "locator": {"strategy": "label", "value": "Password"},
+                "value": "{{secret.LOGIN_PASSWORD}}",
+            },
+            {
+                "action": "click",
+                "description": "Sign in",
+                "locator": {"strategy": "role", "role": "button", "value": "Sign in"},
+            },
+            {"action": "expect_url", "description": "Dashboard opens", "value": "/dashboard"},
+        ],
+        "expected_results": ["The dashboard is shown"],
+        "cleanup": [],
+    },
 }
 
 

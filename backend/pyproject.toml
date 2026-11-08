@@ -61,7 +61,10 @@ known-first-party = ["app", "tests"]
 known-third-party = ["alembic"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S105", "S106"]
+"tests/**" = ["S105", "S106", "E501"]
+# Prompt text and generated-code templates are content, not logic.
+"app/services/test_generation/prompts.py" = ["E501"]
+"app/services/test_generation/renderer.py" = ["E501"]
 "alembic/**" = ["E501"]
 
 [tool.mypy]

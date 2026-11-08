@@ -11,7 +11,7 @@
 | Docker Compose (postgres, redis, backend, frontend) | Implemented (M1), Docker run pending verification on a Docker host |
 | Multi-LLM layer: Gemini, Claude, OpenAI adapters, encryption, routing, request log, AI Providers page | Implemented (M2); positive live call pending a real API key |
 | Additional providers (DeepSeek, Mistral, xAI, OpenRouter, Azure, Bedrock, Ollama, LM Studio) | Planned (M8), shown as unavailable |
-| Testing Workspace / test generation | Design (M3) |
+| Testing Workspace: projects, environments, encrypted test data, suites, tests, AI plan generation, plan editor, approval, versions, Playwright code | Implemented (M3); AI generation verified with test doubles, live run pending a real API key |
 | Browser execution worker | Design (M4) |
 | Workflow Studio + DAG engine | Design (M5) |
 | Execution Center + Browser Preview | Design (M6) |

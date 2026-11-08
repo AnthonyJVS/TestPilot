@@ -6,11 +6,12 @@ Describe a test in plain language. TestPilot turns it into a structured, reviewa
 plan, executes it in an isolated browser, streams every step live, and explains failures —
 using one AI provider (a single Gemini key is enough) or several, routed per task.
 
-> **Project status: Milestone 2 (multi-LLM foundation) of 8.** Authentication, the
-> application shell, the dashboard, the Docker stack and the AI provider layer (Gemini,
-> Claude, OpenAI with Simple/Advanced routing) work today. Test generation, browser
-> execution, Workflow Studio and the Execution Center are designed and scheduled — they are
-> labelled *Planned* in the UI and nothing about them is simulated.
+> **Project status: Milestone 3 (Testing Workspace) of 8.** Authentication, the dashboard,
+> the Docker stack, the AI provider layer (Gemini, Claude, OpenAI with Simple/Advanced
+> routing) and the Testing Workspace (projects, encrypted test data, AI-generated editable
+> test plans, approval, versioned Playwright code) work today. Browser execution, Workflow
+> Studio and the Execution Center are designed and scheduled — they are labelled *Planned*
+> in the UI and nothing about them is simulated.
 > See the [roadmap](docs/DEVELOPMENT_ROADMAP.md).
 
 ## Features
@@ -21,7 +22,7 @@ using one AI provider (a single Gemini key is enough) or several, routed per tas
 | Dashboard with live system status and account activity | ✅ Milestone 1 |
 | Dark (default) and light themes, responsive layout | ✅ Milestone 1 |
 | Multi-LLM: Gemini, Claude, OpenAI; Simple mode (one key) and Advanced per-task routing; encrypted keys; model discovery and manual IDs; routing checks; explicit fallback; daily limits; AI request log | ✅ Milestone 2 |
-| Testing Workspace: projects, scenarios, editable AI test plans, Playwright code | Planned — M3 |
+| Testing Workspace: projects, environments, encrypted test data, suites, plain-language scenarios, AI requirement analysis and test plans, plan editor with validation, approval into immutable versions, deterministic Playwright code (Python and TypeScript) — see [TEST_PLAN_DSL.md](docs/TEST_PLAN_DSL.md) | ✅ Milestone 3 |
 | Isolated browser execution (Chromium, Firefox, WebKit), artifacts, history | Planned — M4 |
 | Workflow Studio: n8n-style node editor with DAG execution | Planned — M5 |
 | Execution Center: live canvas, timeline, node inspector, browser preview | Planned — M6 |

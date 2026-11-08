@@ -143,6 +143,27 @@ exercise the real SDK serialisation (two assumptions were corrected that way:
 Gemini's `inlineData.mime_type` and Anthropic's bearer-token header).
 Upgrades must keep `tests/unit/test_ai_adapters.py` green.
 
+## ADR-015 Flat step model instead of a discriminated union (2026-11-08, accepted; implemented in M3)
+
+**Context.** The plan schema is sent to providers as a JSON Schema for native
+structured output. Discriminated unions render as `oneOf` + `discriminator`,
+which provider schema subsets support unevenly.
+**Decision.** One `Step` object with an `action` enum and nullable fields;
+per-action rules (required/forbidden locator, value, match, state, where
+secrets may appear) are enforced by a model validator. Invalid AI output gets
+one repair attempt with the validation error, then fails without storing.
+**Consequences.** Works with Gemini, Claude and OpenAI schema modes; the UI
+edits every step with one form. See [TEST_PLAN_DSL.md](TEST_PLAN_DSL.md).
+
+## ADR-016 Synchronous plan generation in M3 (2026-11-08, accepted; temporary)
+
+**Decision.** `POST /cases/{id}/plans/generate` runs the two AI calls
+(requirement analysis, test planning) inside the request (bounded by the AI
+timeout and retry limits) and returns the stored draft.
+**Consequences.** Simple and verifiable now; a slow provider holds one HTTP
+request for up to a minute. Milestone 4 moves generation onto the job queue
+with execution events so the Execution Center can show it live.
+
 ## ADR-011 Test data and secrets as references (2026-11-08, accepted; implemented in M3/M4)
 
 **Decision.** Plans reference `{{env.NAME}}` and `{{secret.NAME}}` from the
