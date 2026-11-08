@@ -1,0 +1,11 @@
+.venv
+.env
+.env.*
+data
+tests
+scripts
+openapi.json
+**/__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache

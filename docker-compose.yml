@@ -1,0 +1,90 @@
+# TestPilot local stack.
+#   cp .env.example .env   # then set POSTGRES_PASSWORD and JWT_SECRET
+#   docker compose up --build
+#   open http://localhost:8080
+#
+# Only the frontend (Nginx) port is published. PostgreSQL and Redis live on an internal
+# network without internet access; the API is reachable only through Nginx.
+name: testpilot
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-testpilot}
+      POSTGRES_USER: ${POSTGRES_USER:-testpilot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [internal]
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [internal]
+
+  migrate:
+    build: ./backend
+    command: ["alembic", "upgrade", "head"]
+    environment: &backend-env
+      APP_ENV: production
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-testpilot}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-testpilot}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (at least 32 characters)}
+      # Plain-HTTP localhost demo. Set COOKIE_SECURE=true whenever TestPilot is served over HTTPS.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
+      ENABLE_API_DOCS: ${ENABLE_API_DOCS:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # The API port is not published; only Nginx on the compose network can reach it.
+      FORWARDED_ALLOW_IPS: "*"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks: [internal]
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment: *backend-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    # `edge` gives the API outbound internet access (needed for AI providers from milestone 2).
+    networks: [internal, edge]
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "${TESTPILOT_PORT:-8080}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks: [edge]
+
+networks:
+  internal:
+    internal: true
+  edge: {}
+
+volumes:
+  pgdata:
+  redisdata:

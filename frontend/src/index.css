@@ -1,0 +1,175 @@
+@import "tailwindcss";
+@import "@fontsource-variable/archivo/wdth.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * TestPilot tokens — "night cockpit".
+ * Deep blue-slate instrument panels, one amber approach-beacon accent for brand and primary
+ * actions, and a fixed semantic palette for execution states.
+ */
+:root {
+  --background: #eef1f6;
+  --panel: #ffffff;
+  --raised: #f5f7fb;
+  --sunken: #e4e9f1;
+  --border: #d3dae6;
+  --border-strong: #b7c1d3;
+  --text: #121a2b;
+  --text-muted: #4f5b73;
+  --text-faint: #7a859b;
+
+  --beacon: #a35c08;
+  --beacon-hover: #8c4f06;
+  --beacon-foreground: #ffffff;
+  --beacon-soft: rgb(163 92 8 / 0.1);
+
+  --sky: #2f73b8;
+  --ground: #8a5a2b;
+
+  --status-running: #1f7fd1;
+  --status-completed: #18925a;
+  --status-failed: #d23c3c;
+  --status-queued: #6d55d9;
+  --status-waiting: #66718a;
+  --status-skipped: #8a94a8;
+  --status-cancelled: #7d6f86;
+  --warning: #a86b00;
+
+  --radius-control: 5px;
+  --radius-panel: 10px;
+}
+
+.dark {
+  --background: #0d1321;
+  --panel: #131b2c;
+  --raised: #1a2438;
+  --sunken: #0a0f1a;
+  --border: #243049;
+  --border-strong: #34425f;
+  --text: #e4e9f2;
+  --text-muted: #8f9bb4;
+  --text-faint: #5f6b85;
+
+  --beacon: #f2a541;
+  --beacon-hover: #f7b862;
+  --beacon-foreground: #1b1204;
+  --beacon-soft: rgb(242 165 65 / 0.12);
+
+  --sky: #3d86cc;
+  --ground: #9a6634;
+
+  --status-running: #5db7ff;
+  --status-completed: #3fd48a;
+  --status-failed: #ff6b6b;
+  --status-queued: #a794ff;
+  --status-waiting: #7c879e;
+  --status-skipped: #5f6b85;
+  --status-cancelled: #a397ab;
+  --warning: #f7d154;
+}
+
+@theme inline {
+  --font-sans: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Code", monospace;
+
+  --color-background: var(--background);
+  --color-panel: var(--panel);
+  --color-raised: var(--raised);
+  --color-sunken: var(--sunken);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-faint: var(--text-faint);
+  --color-beacon: var(--beacon);
+  --color-beacon-hover: var(--beacon-hover);
+  --color-beacon-foreground: var(--beacon-foreground);
+  --color-beacon-soft: var(--beacon-soft);
+  --color-sky: var(--sky);
+  --color-ground: var(--ground);
+  --color-running: var(--status-running);
+  --color-completed: var(--status-completed);
+  --color-failed: var(--status-failed);
+  --color-queued: var(--status-queued);
+  --color-waiting: var(--status-waiting);
+  --color-skipped: var(--status-skipped);
+  --color-cancelled: var(--status-cancelled);
+  --color-warning: var(--warning);
+
+  --radius-control: var(--radius-control);
+  --radius-panel: var(--radius-panel);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    font-feature-settings: "ss01", "tnum";
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Headings: slightly expanded, like instrument placards. */
+  h1,
+  h2,
+  h3 {
+    font-stretch: 112%;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    margin: 0;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--beacon);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--beacon-soft);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* The one orchestrated motion: the horizon levels out on the sign-in screen. */
+@keyframes level-flight {
+  from {
+    transform: rotate(-7deg) translateY(18px);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(0deg) translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-level-flight {
+  animation: level-flight 1.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: 50% 50%;
+}
