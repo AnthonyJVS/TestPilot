@@ -123,15 +123,22 @@ function RouteRow({
   canCheck: boolean;
   onCheck: () => void;
 }) {
+  const disabled = !canCheck || !route.model || route.issues.length > 0 || check?.status === "running";
+  // Mobile: [task | button] / model / check. Desktop: task | model | check | button.
   return (
-    <tr className="align-top">
-      <th scope="row" className="py-3 pr-4 text-left font-medium">
+    <li className={cn("grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2 py-3 text-sm md:items-start", ROUTE_GRID)}>
+      <p className="col-start-1 row-start-1 font-medium">
         {route.label}
         {route.required_capabilities.includes("vision") ? (
           <span className="block text-xs font-normal text-faint">Needs image input</span>
         ) : null}
-      </th>
-      <td className="py-3 pr-4">
+      </p>
+      <div className="col-start-2 row-start-1 justify-self-end md:col-start-4">
+        <Button variant="ghost" size="sm" onClick={onCheck} disabled={disabled} aria-label={`Check ${route.label}`}>
+          <Play /> Check
+        </Button>
+      </div>
+      <div className="col-span-2 row-start-2 min-w-0 md:col-span-1 md:col-start-2 md:row-start-1">
         {route.model ? (
           <>
             <p className="font-mono text-[13px]">{route.model.model_id}</p>
@@ -154,24 +161,16 @@ function RouteRow({
             <AlertTriangle className="mt-px size-3 shrink-0" aria-hidden /> {warning}
           </p>
         ))}
-      </td>
-      <td className="py-3 pr-4">
+      </div>
+      <div className="col-span-2 row-start-3 min-w-0 md:col-span-1 md:col-start-3 md:row-start-1">
         <CheckCell state={check} />
-      </td>
-      <td className="py-3 text-right">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onCheck}
-          disabled={!canCheck || !route.model || route.issues.length > 0 || check?.status === "running"}
-          aria-label={`Check ${route.label}`}
-        >
-          <Play /> Check
-        </Button>
-      </td>
-    </tr>
+      </div>
+    </li>
   );
 }
+
+/** Task | model | check result | action — stacked into one column on narrow screens. */
+const ROUTE_GRID = "md:grid-cols-[minmax(9rem,0.8fr)_minmax(0,1.4fr)_minmax(0,1.4fr)_auto]";
 
 export function RoutingPanel({ routing, providers }: { routing: Routing; providers: Provider[] }) {
   const [form, setForm] = useState<FormState>(() => toForm(routing));
@@ -367,28 +366,24 @@ export function RoutingPanel({ routing, providers }: { routing: Routing; provide
             {checkingAll ? "Checking…" : `Check all (${checkable})`}
           </Button>
         </div>
-        <div className="overflow-x-auto px-5">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-xs text-faint">
-                <th scope="col" className="py-2.5 pr-4 font-medium">Task</th>
-                <th scope="col" className="py-2.5 pr-4 font-medium">Model</th>
-                <th scope="col" className="py-2.5 pr-4 font-medium">Check</th>
-                <th scope="col" className="py-2.5 font-medium"><span className="sr-only">Actions</span></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {routing.effective.map((route) => (
-                <RouteRow
-                  key={route.task}
-                  route={route}
-                  check={checks[route.task]}
-                  canCheck={!dirty && !checkingAll}
-                  onCheck={() => void runCheck(route.task)}
-                />
-              ))}
-            </tbody>
-          </table>
+        <div className="px-5">
+          <div aria-hidden className={cn("hidden gap-x-4 border-b border-border py-2.5 text-xs text-faint md:grid", ROUTE_GRID)}>
+            <span>Task</span>
+            <span>Model</span>
+            <span>Check</span>
+            <span />
+          </div>
+          <ul aria-label="Effective routes" className="divide-y divide-border">
+            {routing.effective.map((route) => (
+              <RouteRow
+                key={route.task}
+                route={route}
+                check={checks[route.task]}
+                canCheck={!dirty && !checkingAll}
+                onCheck={() => void runCheck(route.task)}
+              />
+            ))}
+          </ul>
         </div>
       </div>
     </div>

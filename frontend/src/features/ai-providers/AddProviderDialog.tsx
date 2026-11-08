@@ -69,11 +69,29 @@ export function AddProviderDialog({
         title="Add an AI provider"
         description="The key is encrypted before it is stored and is never shown again."
         className="max-w-xl"
+        // Land in the key field: it is the one thing the user must provide.
+        onOpenAutoFocus={(event) => {
+          const key = document.getElementById("provider-key");
+          if (key) {
+            event.preventDefault();
+            key.focus();
+          }
+        }}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" form="add-provider-form" disabled={pending || !selected}>
+              {create.isPending ? "Saving…" : test.isPending ? "Testing connection…" : "Save and test"}
+            </Button>
+          </>
+        }
       >
-        <form onSubmit={submit} className="space-y-5">
+        <form id="add-provider-form" onSubmit={submit} className="space-y-4">
           <fieldset>
             <legend className="mb-2 text-[13px] font-medium text-muted">Provider</legend>
-            <div role="radiogroup" className="grid gap-2 sm:grid-cols-3">
+            <div role="radiogroup" className="grid grid-cols-3 gap-2">
               {available.map((type) => (
                 <button
                   key={type.type_id}
@@ -82,11 +100,11 @@ export function AddProviderDialog({
                   aria-checked={type.type_id === typeId}
                   onClick={() => choose(type)}
                   className={cn(
-                    "rounded-panel border px-3 py-2.5 text-left text-sm transition-colors",
+                    "rounded-panel border px-2.5 py-2 text-left text-[13px] leading-tight font-medium transition-colors",
                     type.type_id === typeId ? "border-beacon bg-beacon-soft" : "border-border-strong hover:bg-raised",
                   )}
                 >
-                  <span className="font-medium">{type.display_name}</span>
+                  {type.display_name}
                 </button>
               ))}
             </div>
@@ -112,11 +130,6 @@ export function AddProviderDialog({
                     : "Requests stay on your machine."}
                 </span>
               </p>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="provider-name">Connection name</Label>
-                <Input id="provider-name" value={name} maxLength={100} onChange={(e) => setName(e.target.value)} />
-              </div>
 
               {selected.requires_api_key ? (
                 <div className="space-y-1.5">
@@ -145,6 +158,11 @@ export function AddProviderDialog({
                 </div>
               ) : null}
 
+              <div className="space-y-1.5">
+                <Label htmlFor="provider-name">Connection name</Label>
+                <Input id="provider-name" value={name} maxLength={100} onChange={(e) => setName(e.target.value)} />
+              </div>
+
               {selected.base_url_mode !== "none" ? (
                 <div className="space-y-1.5">
                   <Label htmlFor="provider-url">
@@ -169,15 +187,6 @@ export function AddProviderDialog({
               {error}
             </p>
           ) : null}
-
-          <div className="flex justify-end gap-2 pt-1">
-            <Button variant="ghost" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={pending || !selected}>
-              {create.isPending ? "Saving…" : test.isPending ? "Testing connection…" : "Save and test"}
-            </Button>
-          </div>
         </form>
       </DialogContent>
     </Dialog>
