@@ -6,7 +6,7 @@ Please do not open public issues for security problems. Contact the maintainer p
 with a description, reproduction steps and impact. You will get an acknowledgement and a
 fix timeline.
 
-## What is implemented (Milestones 1–6)
+## What is implemented (Milestones 1–7)
 
 | AI control (M2) | Implementation |
 | --- | --- |
@@ -53,6 +53,14 @@ fix timeline.
 | Live frames | Taken by the isolated worker with the same secret masking as step screenshots; served only through owner-checked artifact endpoints; capped per run and per session |
 | AI call details | `GET /ai/requests/{id}` is owner-scoped and returns only the sanitized, redacted previews stored under the user's "Keep sanitized prompt and response copies" setting; every call is labelled as an external provider |
 | Replay | Re-derived in the browser from events the user may already read; no new data is exposed and test data stays as `{{env.*}}`/`{{secret.*}}` references |
+
+| Failure analysis control (M7) | Implementation |
+| --- | --- |
+| Data sent to AI | Evidence built from records already scrubbed of secret values; accessibility snapshots scrubbed too; screenshots (masked) only to models with verified vision; page content wrapped as untrusted data |
+| Facts vs AI | Evidence is collected by TestPilot; AI hypotheses must cite it and are shown separately as "hypotheses, not facts" |
+| No silent changes | Repairs are proposals; approval re-validates (allowed domains, test data, DSL) and creates a new immutable version through the normal path; stale proposals are refused; every decision is audited |
+| Test integrity | The repair prompt forbids weakening assertions to hide bugs; edits are limited to replace/insert/remove of DSL steps |
+| Reversibility | Rollback makes an earlier immutable version current again (audited) |
 
 | Control | Implementation |
 | --- | --- |

@@ -424,6 +424,7 @@ class TestRunOrchestrator:
         row.finished_at = utcnow()
         row.duration_ms = result.duration_ms
         row.url = result.url
+        row.page_snapshot = result.page_snapshot
         if result.error:
             row.error_code, row.error_message = result.error.code, result.error.message
             test.steps_failed += 1

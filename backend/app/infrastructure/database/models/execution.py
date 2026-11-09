@@ -128,6 +128,8 @@ class ExecutionStep(UUIDPrimaryKeyMixin, Base):
     url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     error_code: Mapped[str | None] = mapped_column(String(60), nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Accessibility snapshot of the page when this step failed (secrets scrubbed).
+    page_snapshot: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     test_execution: Mapped[TestExecution] = relationship(back_populates="steps")
 

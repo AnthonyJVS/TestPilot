@@ -521,6 +521,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/executions/{execution_id}/failure-analysis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Failure Review */
+        get: operations["get_failure_review_api_v1_executions__execution_id__failure_analysis_get"];
+        put?: never;
+        /**
+         * Analyse Failure
+         * @description Collect evidence from a failed run and ask the routed AI model to explain it.
+         */
+        post: operations["analyse_failure_api_v1_executions__execution_id__failure_analysis_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/failure-analyses/{analysis_id}/repair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Propose Repair
+         * @description Ask the AI for a minimal, validated test change. Nothing changes until it is approved.
+         */
+        post: operations["propose_repair_api_v1_failure_analyses__analysis_id__repair_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/plans/{plan_id}": {
         parameters: {
             query?: never;
@@ -662,6 +703,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/repair-proposals/{proposal_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve Repair */
+        post: operations["approve_repair_api_v1_repair_proposals__proposal_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/repair-proposals/{proposal_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject Repair */
+        post: operations["reject_repair_api_v1_repair_proposals__proposal_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/suites/{suite_id}": {
         parameters: {
             query?: never;
@@ -708,6 +783,26 @@ export interface paths {
         get: operations["get_version_api_v1_versions__version_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/versions/{version_id}/rollback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rollback Version
+         * @description Make an earlier approved version the current one again (versions stay immutable).
+         */
+        post: operations["rollback_version_api_v1_versions__version_id__rollback_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -986,6 +1081,17 @@ export interface components {
             /** Total Tokens */
             total_tokens: number | null;
         };
+        /** ApprovalOut */
+        ApprovalOut: {
+            proposal: components["schemas"]["RepairProposalOut"];
+            /** Version */
+            version: number;
+            /**
+             * Version Id
+             * Format: uuid
+             */
+            version_id: string;
+        };
         /** ArtifactOut */
         ArtifactOut: {
             /** Content Type */
@@ -1214,6 +1320,26 @@ export interface components {
              */
             status: "ok" | "error" | "not_configured";
         };
+        /** DiffRow */
+        DiffRow: {
+            /** After */
+            after: {
+                [key: string]: unknown;
+            } | null;
+            /** Before */
+            before: {
+                [key: string]: unknown;
+            } | null;
+            /** Index */
+            index: number | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "same" | "changed" | "added" | "removed";
+            /** Reason */
+            reason?: string | null;
+        };
         /** EffectiveRouteOut */
         EffectiveRouteOut: {
             /** Issues */
@@ -1267,6 +1393,17 @@ export interface components {
             is_default?: boolean | null;
             /** Name */
             name?: string | null;
+        };
+        /** EvidenceItem */
+        EvidenceItem: {
+            /** Detail */
+            detail: string;
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Title */
+            title: string;
         };
         /** ExecutionEventOut */
         ExecutionEventOut: {
@@ -1464,6 +1601,85 @@ export interface components {
             /** Workflow Id */
             workflow_id: string | null;
         };
+        /** FailureAnalysisOut */
+        FailureAnalysisOut: {
+            /** Ai Request Ids */
+            ai_request_ids: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Error Code */
+            error_code: string | null;
+            /** Error Message */
+            error_message: string | null;
+            /**
+             * Evidence
+             * @description Verified facts collected from the run.
+             */
+            evidence: components["schemas"]["EvidenceItem"][];
+            /**
+             * Execution Id
+             * Format: uuid
+             */
+            execution_id: string;
+            /** Failed Step Index */
+            failed_step_index: number | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** @description AI output: hypotheses, not facts. */
+            result: components["schemas"]["FailureAnalysisOutput"] | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "completed" | "failed";
+            /** Test Case Id */
+            test_case_id: string | null;
+            /** Test Version Id */
+            test_version_id: string | null;
+            /** Used Screenshot */
+            used_screenshot: boolean;
+        };
+        /**
+         * FailureAnalysisOutput
+         * @description What the AI returns for a failure. Every hypothesis cites the evidence it rests on.
+         */
+        FailureAnalysisOutput: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "locator_changed" | "element_missing" | "timing" | "assertion_mismatch" | "navigation" | "network" | "test_data" | "environment" | "application_bug" | "unknown";
+            /** Hypotheses */
+            hypotheses: components["schemas"]["Hypothesis"][];
+            /**
+             * Recommended Action
+             * @enum {string}
+             */
+            recommended_action: "repair_test" | "report_bug" | "retry" | "fix_environment" | "needs_more_information";
+            /**
+             * Repair Hint
+             * @description What a test change would look like, if any.
+             * @default
+             */
+            repair_hint: string;
+            /**
+             * Summary
+             * @description Two or three sentences.
+             */
+            summary: string;
+        };
+        /** FailureReviewOut */
+        FailureReviewOut: {
+            analysis: components["schemas"]["FailureAnalysisOut"] | null;
+            /** Proposals */
+            proposals: components["schemas"]["RepairProposalOut"][];
+        };
         /** GraphEdge */
         GraphEdge: {
             /** Id */
@@ -1536,6 +1752,21 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** Hypothesis */
+        Hypothesis: {
+            /**
+             * Confidence
+             * @enum {string}
+             */
+            confidence: "low" | "medium" | "high";
+            /**
+             * Evidence Ids
+             * @description Evidence items supporting it (E1...).
+             */
+            evidence_ids?: string[];
+            /** Statement */
+            statement: string;
         };
         /** LiveResponse */
         LiveResponse: {
@@ -1739,7 +1970,7 @@ export interface components {
              * Source
              * @enum {string}
              */
-            source: "ai" | "manual" | "edited";
+            source: "ai" | "manual" | "edited" | "repair";
             /**
              * Status
              * @enum {string}
@@ -1859,6 +2090,20 @@ export interface components {
             /** Name */
             name?: string | null;
         };
+        /** ProposalIssue */
+        ProposalIssue: {
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "error" | "warning";
+            /** Step */
+            step?: number | null;
+        };
         /** ProviderCreate */
         ProviderCreate: {
             /** Api Key */
@@ -1971,6 +2216,63 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** RejectIn */
+        RejectIn: {
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /** RepairProposalOut */
+        RepairProposalOut: {
+            /** Ai Request Ids */
+            ai_request_ids: string[];
+            /**
+             * Analysis Id
+             * Format: uuid
+             */
+            analysis_id: string;
+            /** Base Version Id */
+            base_version_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decided At */
+            decided_at: string | null;
+            /** Decision Note */
+            decision_note: string | null;
+            /** Diff */
+            diff: components["schemas"]["DiffRow"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Issues */
+            issues: components["schemas"]["ProposalIssue"][];
+            /** Rationale */
+            rationale: string;
+            /** Resulting Version Id */
+            resulting_version_id: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "proposed" | "no_change" | "invalid" | "approved" | "rejected" | "superseded";
+            /**
+             * Test Case Id
+             * Format: uuid
+             */
+            test_case_id: string;
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "fix_test" | "no_test_change";
+        };
         /**
          * RequirementAnalysis
          * @description AI output of the requirement-analysis step (shown to the reviewer as AI-produced).
@@ -2026,6 +2328,21 @@ export interface components {
              * @enum {string}
              */
             retry_on: "transient" | "any";
+        };
+        /** RollbackOut */
+        RollbackOut: {
+            /**
+             * Current Version Id
+             * Format: uuid
+             */
+            current_version_id: string;
+            /**
+             * Test Case Id
+             * Format: uuid
+             */
+            test_case_id: string;
+            /** Version */
+            version: number;
         };
         /** RouteModelOut */
         RouteModelOut: {
@@ -3804,6 +4121,99 @@ export interface operations {
             };
         };
     };
+    get_failure_review_api_v1_executions__execution_id__failure_analysis_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                execution_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureReviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analyse_failure_api_v1_executions__execution_id__failure_analysis_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                execution_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureAnalysisOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    propose_repair_api_v1_failure_analyses__analysis_id__repair_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                analysis_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepairProposalOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     update_plan_api_v1_plans__plan_id__put: {
         parameters: {
             query?: never;
@@ -4235,6 +4645,72 @@ export interface operations {
             };
         };
     };
+    approve_repair_api_v1_repair_proposals__proposal_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_repair_api_v1_repair_proposals__proposal_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepairProposalOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     delete_suite_api_v1_suites__suite_id__delete: {
         parameters: {
             query?: never;
@@ -4337,6 +4813,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rollback_version_api_v1_versions__version_id__rollback_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RollbackOut"];
                 };
             };
             /** @description Validation Error */

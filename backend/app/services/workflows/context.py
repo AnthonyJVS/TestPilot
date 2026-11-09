@@ -12,7 +12,7 @@ import asyncio
 import logging
 import uuid
 from dataclasses import dataclass, field
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -79,6 +79,7 @@ class SessionState:
     blocked: list[BlockedRequest] = field(default_factory=list)
     url: str | None = None
     open: bool = True
+    last_snapshot: str | None = None
 
     def handle(self) -> dict[str, Any]:
         """The value carried by ``session`` edges (no secrets, no internals)."""
@@ -120,6 +121,10 @@ class RunContext:
         self.uses_secrets = uses_secrets
         self.sessions: dict[str, SessionState] = {}
         self.frames = FrameBudget()
+        # Evidence for failure analysis: which session and last screenshot each node used.
+        self.node_sessions: dict[str, SessionState] = {}
+        self.node_frames: dict[str, str] = {}
+        self.node_labels: dict[str, str] = {}
         self._step_counter = 0
         self._details = 0
         all_variables: dict[str, Variable] = {}
@@ -167,6 +172,8 @@ class RunContext:
             self._db.add(artifact)
             await self._db.flush()
             frame = info.content_type == "image/jpeg"
+            if frame and not interim:
+                self.node_frames[node_id] = path.as_posix()
             title = "Live frame" if interim else f"Screenshot from node {node_id}"
             self.recorder.add(
                 "browser.frame" if frame else "artifact.created",
@@ -268,6 +275,9 @@ class RunContext:
                 ) from exc
         result = StepResult.model_validate(self.scrubber.data(raw.model_dump()))
         state.url = result.url
+        self.node_sessions[node_id] = state
+        if result.page_snapshot:
+            state.last_snapshot = result.page_snapshot
         state.console.extend(result.console)
         state.network_failures.extend(result.network_failures)
         state.blocked.extend(result.blocked)
@@ -363,6 +373,17 @@ class RunContext:
                 continue
             for info in closed.artifacts:
                 await self.add_artifact(info, node_id=state.node_id)
+
+    def frame_bytes(self, node_id: str, limit: int = 2_000_000) -> bytes | None:
+        """The last step screenshot a node produced, read from the artifacts directory."""
+        relative = self.node_frames.get(node_id)
+        if relative is None:
+            return None
+        root = Path(self.settings.artifacts_dir).resolve()
+        path = (root / relative).resolve()
+        if not path.is_relative_to(root) or not path.is_file() or path.stat().st_size > limit:
+            return None
+        return path.read_bytes()
 
     # ------------------------------------------------------------------ AI
     def ai(self, db: AsyncSession) -> AIOrchestrator:

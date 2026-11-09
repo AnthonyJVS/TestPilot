@@ -714,6 +714,82 @@ class TestPlannerNode(NodeType):
         return NodeResult({"plan": plan.model_dump(mode="json")}, f"{len(plan.steps)} steps")
 
 
+class FailureAnalyzerNode(NodeType):
+    type_id = "ai.failure_analyzer"
+    category = "ai"
+    label = "Failure Analyzer"
+    description = (
+        "Explains why the connected node failed, from evidence the run collected: page, "
+        "accessibility tree, console, network and (with a vision model) its last screenshot."
+    )
+    inputs = (Port("failure", "error", "Failure"),)
+    outputs = (Port("analysis", "json", "Analysis"),)
+
+    async def execute(self, run: NodeRun) -> NodeResult:
+        from app.infrastructure.database.models import ExecutionEvent
+        from app.services.ai.router import TaskRouter
+        from app.services.quality.analysis import analyse, vision_supported
+        from app.services.quality.evidence import node_evidence
+
+        failure = run.inputs.get("failure")
+        if not isinstance(failure, dict) or not failure.get("node_id"):
+            raise NodeError("node.no_failure", "Connect the On error output of another node.")
+        failed_id = str(failure["node_id"])
+        state = run.ctx.node_sessions.get(failed_id)
+        async with run.ctx.session_factory() as db:
+            events = list(
+                (
+                    await db.execute(
+                        select(ExecutionEvent)
+                        .where(
+                            ExecutionEvent.execution_id == run.ctx.execution.id,
+                            ExecutionEvent.node_id == failed_id,
+                        )
+                        .order_by(ExecutionEvent.seq)
+                        .limit(1000)
+                    )
+                ).scalars()
+            )
+        evidence = node_evidence(
+            node_label=run.ctx.node_labels.get(failed_id, failed_id),
+            error_code=str(failure.get("code", "unknown")),
+            error_message=str(failure.get("message", "")),
+            url=state.url if state else None,
+            snapshot=state.last_snapshot if state else None,
+            events=events,
+            failed_node_id=failed_id,
+        )
+        async with run.ctx.session_factory() as db:
+            image = None
+            if await vision_supported(
+                TaskRouter(db, run.ctx.providers), run.ctx.owner_id, TaskCategory.FAILURE_ANALYSIS
+            ):
+                image = run.ctx.frame_bytes(failed_id)
+            try:
+                output, request_id = await analyse(
+                    run.ctx.ai(db), run.ctx.owner_id, evidence=evidence, scenario="", image=image
+                )
+            except AppError as exc:
+                transient = exc.code in ("ai.rate_limited", "ai.provider_unavailable", "ai.timeout")
+                raise NodeError(exc.code, exc.message, transient=transient) from exc
+        await run.ctx.emit(
+            "ai.request.completed",
+            f"Failure analysis: {output.category}, recommended {output.recommended_action}",
+            category="ai",
+            node_id=run.node.id,
+            data={
+                "ai_request_id": request_id,
+                "task": "failure_analysis",
+                "used_screenshot": image is not None,
+                "external": True,
+            },
+        )
+        return NodeResult(
+            {"analysis": {"evidence": evidence, **output.model_dump(mode="json")}},
+            f"{output.category} → {output.recommended_action}",
+        )
+
+
 # ---------------------------------------------------------------------------- logic
 
 
@@ -845,23 +921,24 @@ PLANNED: list[type[NodeType]] = [
         "ai",
         "Playwright Code Generator",
         "AI-written Playwright code for review.",
-        7,
+        8,
     ),
     _planned(
-        "ai.failure_analyzer", "ai", "Failure Analyzer", "Explains failures from evidence.", 7
+        "ai.visual_analyzer", "ai", "Visual Analyzer", "Checks screenshots with a vision model.", 8
     ),
     _planned(
-        "ai.visual_analyzer", "ai", "Visual Analyzer", "Checks screenshots with a vision model.", 7
-    ),
-    _planned(
-        "ai.repair_proposal", "ai", "Test Repair Proposal", "Proposes a fix for human approval.", 7
+        "ai.repair_proposal",
+        "ai",
+        "Test Repair Proposal",
+        "Proposes a fix for human approval (available today from a failed test run).",
+        8,
     ),
     _planned("ai.report_generator", "ai", "Report Generator", "Writes a run report.", 8),
-    _planned("logic.switch", "logic", "Switch", "Routes to one of several cases.", 6),
-    _planned("logic.approval_gate", "logic", "Approval Gate", "Pauses until a person approves.", 7),
-    _planned("data.transform", "data", "Transform Data", "Reshapes JSON with a mapping.", 6),
-    _planned("data.validate_schema", "data", "Validate Schema", "Checks JSON against a schema.", 6),
-    _planned("data.store_artifact", "data", "Store Artifact", "Saves data as a run artifact.", 6),
+    _planned("logic.switch", "logic", "Switch", "Routes to one of several cases.", 8),
+    _planned("logic.approval_gate", "logic", "Approval Gate", "Pauses until a person approves.", 8),
+    _planned("data.transform", "data", "Transform Data", "Reshapes JSON with a mapping.", 8),
+    _planned("data.validate_schema", "data", "Validate Schema", "Checks JSON against a schema.", 8),
+    _planned("data.store_artifact", "data", "Store Artifact", "Saves data as a run artifact.", 8),
 ]
 
 AVAILABLE: list[type[NodeType]] = [
@@ -882,6 +959,7 @@ AVAILABLE: list[type[NodeType]] = [
     RunPlanNode,
     RequirementAnalyzerNode,
     TestPlannerNode,
+    FailureAnalyzerNode,
     ConditionNode,
     MergeNode,
     DelayNode,

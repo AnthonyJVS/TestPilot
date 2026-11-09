@@ -16,6 +16,7 @@ from app.infrastructure.database.models.execution import (
     WorkflowExecution,
 )
 from app.infrastructure.database.models.identity import AuditLog, AuthSession, RefreshToken, User
+from app.infrastructure.database.models.quality import FailureAnalysis, RepairProposal
 from app.infrastructure.database.models.testing import (
     EnvironmentVariable,
     Project,
@@ -44,10 +45,12 @@ __all__ = [
     "ExecutionArtifact",
     "ExecutionEvent",
     "ExecutionStep",
+    "FailureAnalysis",
     "NodeExecution",
     "Project",
     "ProjectEnvironment",
     "RefreshToken",
+    "RepairProposal",
     "TestCase",
     "TestExecution",
     "TestPlanRecord",

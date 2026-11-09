@@ -48,7 +48,7 @@ export function Sidebar() {
         <SidebarNav />
       </div>
       <p className="border-t border-border px-6 py-4 text-xs text-faint">
-        Milestone 6: execution center
+        Milestone 7: failure analysis
       </p>
     </aside>
   );

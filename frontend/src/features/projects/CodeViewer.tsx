@@ -1,5 +1,6 @@
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { ErrorState } from "@/components/common/ErrorState";
 import { Button } from "@/components/ui/button";
@@ -7,17 +8,22 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn, formatDateTime } from "@/lib/utils";
 
+import { useRollback } from "@/features/quality/api";
+
 import { useVersion } from "./api";
 
 type Language = "python" | "typescript";
 
 export function CodeViewer({
+  caseId,
   versions,
   currentVersionId,
 }: {
+  caseId: string;
   versions: { id: string; version: number; created_at: string }[];
   currentVersionId: string | null;
 }) {
+  const rollback = useRollback(caseId);
   const [selected, setSelected] = useState(currentVersionId ?? versions[versions.length - 1]?.id ?? null);
   const [language, setLanguage] = useState<Language>("python");
   const [copied, setCopied] = useState(false);
@@ -46,6 +52,21 @@ export function CodeViewer({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {selected && currentVersionId && selected !== currentVersionId ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={rollback.isPending}
+              onClick={() =>
+                rollback.mutate(selected, {
+                  onSuccess: (r) => toast.success(`Version ${r.version} is current again`),
+                  onError: (e) => toast.error(e.message),
+                })
+              }
+            >
+              Make this version current
+            </Button>
+          ) : null}
           <NativeSelect aria-label="Version" value={selected ?? ""} onChange={(e) => setSelected(e.target.value)} className="w-44">
             {[...versions].reverse().map((v) => (
               <option key={v.id} value={v.id}>

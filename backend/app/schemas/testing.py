@@ -190,7 +190,7 @@ class AIRequestSummaryOut(BaseModel):
 class PlanOut(BaseModel):
     id: uuid.UUID
     revision: int
-    source: Literal["ai", "manual", "edited"]
+    source: Literal["ai", "manual", "edited", "repair"]
     status: Literal["draft", "approved"]
     plan: TestPlan
     analysis: RequirementAnalysis | None

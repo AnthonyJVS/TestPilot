@@ -17,7 +17,7 @@ known limitations, security considerations, next milestone.
 | 4 | Browser execution worker + event pipeline | Implemented; verified with real Chromium locally (development mode), Docker path checked by the CI smoke run |
 | 5 | Workflow Studio + DAG engine | Implemented; verified with real Chromium locally, AI nodes with fake providers (live AI pending a real key) |
 | 6 | Execution Center + Browser Preview | Implemented; live frames verified with real Chromium, replay and inspector verified in the UI |
-| 7 | Failure analysis and controlled repair | Planned |
+| 7 | Failure analysis and controlled repair | Implemented; verified with real Chromium and a fake provider in tests, live loop with Gemini |
 | 8 | Remaining providers, reports, usage dashboard, CI/CD, polish | Planned |
 
 ## M1 — Foundation

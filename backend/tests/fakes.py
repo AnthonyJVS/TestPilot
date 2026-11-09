@@ -48,6 +48,24 @@ CHECK_ANSWERS: dict[str, dict[str, Any]] = {
         ],
         "ambiguities": [],
     },
+    "FailureAnalysisOutput": {
+        "summary": "The test looks for a 'Log in' button, but the page calls it 'Sign in'.",
+        "category": "locator_changed",
+        "hypotheses": [
+            {
+                "statement": "The button was renamed from 'Log in' to 'Sign in'.",
+                "confidence": "high",
+                "evidence_ids": ["E1", "E4", "E99"],
+            }
+        ],
+        "recommended_action": "repair_test",
+        "repair_hint": "Target the button by its new name.",
+    },
+    "RepairOutput": {
+        "verdict": "no_test_change",
+        "rationale": "Default fake answer: the application is at fault.",
+        "changes": [],
+    },
     "TestPlan": {
         "name": "Sign in and see the dashboard",
         "description": "A registered user signs in.",

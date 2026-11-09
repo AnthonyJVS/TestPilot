@@ -145,6 +145,7 @@ class WorkflowOrchestrator:
                     environments=await self._environments(db, project.id),
                     uses_secrets=bool(execution.snapshot.get("uses_secrets")),
                 )
+                ctx.node_labels = {n.id: n.label or n.type for n in graph.nodes}
                 await ctx.emit(
                     "execution.started",
                     f"Workflow {execution.snapshot.get('workflow_name', '')} "

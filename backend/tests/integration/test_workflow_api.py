@@ -132,8 +132,8 @@ async def test_node_types_describe_ports_schemas_and_planned_nodes(studio: Ctx) 
     assert types["browser.fill"]["config_schema"]["properties"]["value"]["type"] == "string"
     assert types["logic.condition"]["outputs"][0]["name"] == "true"
     assert types["data.input"]["entry"] is True
-    assert types["ai.failure_analyzer"]["available"] is False
-    assert types["ai.failure_analyzer"]["milestone"] == 7
+    assert types["ai.visual_analyzer"]["available"] is False
+    assert types["ai.visual_analyzer"]["milestone"] == 8
 
 
 async def test_validation_reports_graph_problems_and_blocks_runs(
@@ -146,7 +146,7 @@ async def test_validation_reports_graph_problems_and_blocks_runs(
             node("in", "data.input", text="hi"),
             node("nav", "browser.navigate", url="https://evil.example.org/"),
             node("click", "browser.click"),
-            node("plan", "ai.failure_analyzer"),
+            node("plan", "ai.visual_analyzer"),
             node("odd", "does.not.exist"),
             node("bad", "browser.assert", check="text", expected=""),
         ],

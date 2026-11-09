@@ -365,6 +365,29 @@
         "title": "AIRequestSummaryOut",
         "type": "object"
       },
+      "ApprovalOut": {
+        "properties": {
+          "proposal": {
+            "$ref": "#/components/schemas/RepairProposalOut"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "version_id": {
+            "format": "uuid",
+            "title": "Version Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "proposal",
+          "version_id",
+          "version"
+        ],
+        "title": "ApprovalOut",
+        "type": "object"
+      },
       "ArtifactOut": {
         "properties": {
           "content_type": {
@@ -969,6 +992,74 @@
         "title": "DependencyStatus",
         "type": "object"
       },
+      "DiffRow": {
+        "properties": {
+          "after": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "After"
+          },
+          "before": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Before"
+          },
+          "index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Index"
+          },
+          "kind": {
+            "enum": [
+              "same",
+              "changed",
+              "added",
+              "removed"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "kind",
+          "index",
+          "before",
+          "after"
+        ],
+        "title": "DiffRow",
+        "type": "object"
+      },
       "EffectiveRouteOut": {
         "properties": {
           "issues": {
@@ -1161,6 +1252,34 @@
           }
         },
         "title": "EnvironmentUpdate",
+        "type": "object"
+      },
+      "EvidenceItem": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "detail"
+        ],
+        "title": "EvidenceItem",
         "type": "object"
       },
       "ExecutionEventOut": {
@@ -1753,6 +1872,228 @@
         "title": "ExecutionSummaryOut",
         "type": "object"
       },
+      "FailureAnalysisOut": {
+        "properties": {
+          "ai_request_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ai Request Ids",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "evidence": {
+            "description": "Verified facts collected from the run.",
+            "items": {
+              "$ref": "#/components/schemas/EvidenceItem"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "execution_id": {
+            "format": "uuid",
+            "title": "Execution Id",
+            "type": "string"
+          },
+          "failed_step_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed Step Index"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FailureAnalysisOutput"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "AI output: hypotheses, not facts."
+          },
+          "status": {
+            "enum": [
+              "completed",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "test_case_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test Case Id"
+          },
+          "test_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test Version Id"
+          },
+          "used_screenshot": {
+            "title": "Used Screenshot",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "execution_id",
+          "test_case_id",
+          "test_version_id",
+          "failed_step_index",
+          "status",
+          "evidence",
+          "used_screenshot",
+          "result",
+          "ai_request_ids",
+          "error_code",
+          "error_message",
+          "created_at"
+        ],
+        "title": "FailureAnalysisOut",
+        "type": "object"
+      },
+      "FailureAnalysisOutput": {
+        "additionalProperties": false,
+        "description": "What the AI returns for a failure. Every hypothesis cites the evidence it rests on.",
+        "properties": {
+          "category": {
+            "enum": [
+              "locator_changed",
+              "element_missing",
+              "timing",
+              "assertion_mismatch",
+              "navigation",
+              "network",
+              "test_data",
+              "environment",
+              "application_bug",
+              "unknown"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "hypotheses": {
+            "items": {
+              "$ref": "#/components/schemas/Hypothesis"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "title": "Hypotheses",
+            "type": "array"
+          },
+          "recommended_action": {
+            "enum": [
+              "repair_test",
+              "report_bug",
+              "retry",
+              "fix_environment",
+              "needs_more_information"
+            ],
+            "title": "Recommended Action",
+            "type": "string"
+          },
+          "repair_hint": {
+            "default": "",
+            "description": "What a test change would look like, if any.",
+            "maxLength": 500,
+            "title": "Repair Hint",
+            "type": "string"
+          },
+          "summary": {
+            "description": "Two or three sentences.",
+            "maxLength": 600,
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary",
+          "category",
+          "hypotheses",
+          "recommended_action"
+        ],
+        "title": "FailureAnalysisOutput",
+        "type": "object"
+      },
+      "FailureReviewOut": {
+        "properties": {
+          "analysis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FailureAnalysisOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "proposals": {
+            "items": {
+              "$ref": "#/components/schemas/RepairProposalOut"
+            },
+            "title": "Proposals",
+            "type": "array"
+          }
+        },
+        "required": [
+          "analysis",
+          "proposals"
+        ],
+        "title": "FailureReviewOut",
+        "type": "object"
+      },
       "GraphEdge": {
         "additionalProperties": false,
         "properties": {
@@ -1927,6 +2268,41 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "Hypothesis": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Confidence",
+            "type": "string"
+          },
+          "evidence_ids": {
+            "description": "Evidence items supporting it (E1...).",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "statement": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Statement",
+            "type": "string"
+          }
+        },
+        "required": [
+          "statement",
+          "confidence"
+        ],
+        "title": "Hypothesis",
         "type": "object"
       },
       "LiveResponse": {
@@ -2502,7 +2878,8 @@
             "enum": [
               "ai",
               "manual",
-              "edited"
+              "edited",
+              "repair"
             ],
             "title": "Source",
             "type": "string"
@@ -2807,6 +3184,44 @@
           }
         },
         "title": "ProjectUpdate",
+        "type": "object"
+      },
+      "ProposalIssue": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "error",
+              "warning"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "step": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Step"
+          }
+        },
+        "required": [
+          "severity",
+          "code",
+          "message"
+        ],
+        "title": "ProposalIssue",
         "type": "object"
       },
       "ProviderCreate": {
@@ -3142,6 +3557,152 @@
         "title": "RegisterRequest",
         "type": "object"
       },
+      "RejectIn": {
+        "properties": {
+          "note": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "title": "RejectIn",
+        "type": "object"
+      },
+      "RepairProposalOut": {
+        "properties": {
+          "ai_request_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ai Request Ids",
+            "type": "array"
+          },
+          "analysis_id": {
+            "format": "uuid",
+            "title": "Analysis Id",
+            "type": "string"
+          },
+          "base_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Version Id"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "decision_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Note"
+          },
+          "diff": {
+            "items": {
+              "$ref": "#/components/schemas/DiffRow"
+            },
+            "title": "Diff",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalIssue"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "rationale": {
+            "title": "Rationale",
+            "type": "string"
+          },
+          "resulting_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resulting Version Id"
+          },
+          "status": {
+            "enum": [
+              "proposed",
+              "no_change",
+              "invalid",
+              "approved",
+              "rejected",
+              "superseded"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "test_case_id": {
+            "format": "uuid",
+            "title": "Test Case Id",
+            "type": "string"
+          },
+          "verdict": {
+            "enum": [
+              "fix_test",
+              "no_test_change"
+            ],
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "analysis_id",
+          "test_case_id",
+          "base_version_id",
+          "status",
+          "verdict",
+          "rationale",
+          "diff",
+          "issues",
+          "ai_request_ids",
+          "resulting_version_id",
+          "decided_at",
+          "decision_note",
+          "created_at"
+        ],
+        "title": "RepairProposalOut",
+        "type": "object"
+      },
       "RequirementAnalysis": {
         "additionalProperties": false,
         "description": "AI output of the requirement-analysis step (shown to the reviewer as AI-produced).",
@@ -3229,6 +3790,31 @@
           }
         },
         "title": "RetryPolicy",
+        "type": "object"
+      },
+      "RollbackOut": {
+        "properties": {
+          "current_version_id": {
+            "format": "uuid",
+            "title": "Current Version Id",
+            "type": "string"
+          },
+          "test_case_id": {
+            "format": "uuid",
+            "title": "Test Case Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "test_case_id",
+          "current_version_id",
+          "version"
+        ],
+        "title": "RollbackOut",
         "type": "object"
       },
       "RouteModelOut": {
@@ -6763,6 +7349,150 @@
         ]
       }
     },
+    "/api/v1/executions/{execution_id}/failure-analysis": {
+      "get": {
+        "operationId": "get_failure_review_api_v1_executions__execution_id__failure_analysis_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "execution_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Execution Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailureReviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Failure Review",
+        "tags": [
+          "quality"
+        ]
+      },
+      "post": {
+        "description": "Collect evidence from a failed run and ask the routed AI model to explain it.",
+        "operationId": "analyse_failure_api_v1_executions__execution_id__failure_analysis_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "execution_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Execution Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailureAnalysisOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Analyse Failure",
+        "tags": [
+          "quality"
+        ]
+      }
+    },
+    "/api/v1/failure-analyses/{analysis_id}/repair": {
+      "post": {
+        "description": "Ask the AI for a minimal, validated test change. Nothing changes until it is approved.",
+        "operationId": "propose_repair_api_v1_failure_analyses__analysis_id__repair_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analysis_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Analysis Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepairProposalOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Propose Repair",
+        "tags": [
+          "quality"
+        ]
+      }
+    },
     "/api/v1/plans/{plan_id}": {
       "put": {
         "operationId": "update_plan_api_v1_plans__plan_id__put",
@@ -7502,6 +8232,112 @@
         ]
       }
     },
+    "/api/v1/repair-proposals/{proposal_id}/approve": {
+      "post": {
+        "operationId": "approve_repair_api_v1_repair_proposals__proposal_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Approve Repair",
+        "tags": [
+          "quality"
+        ]
+      }
+    },
+    "/api/v1/repair-proposals/{proposal_id}/reject": {
+      "post": {
+        "operationId": "reject_repair_api_v1_repair_proposals__proposal_id__reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Proposal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepairProposalOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Reject Repair",
+        "tags": [
+          "quality"
+        ]
+      }
+    },
     "/api/v1/suites/{suite_id}": {
       "delete": {
         "operationId": "delete_suite_api_v1_suites__suite_id__delete",
@@ -7670,6 +8506,55 @@
         "summary": "Get Version",
         "tags": [
           "testing"
+        ]
+      }
+    },
+    "/api/v1/versions/{version_id}/rollback": {
+      "post": {
+        "description": "Make an earlier approved version the current one again (versions stay immutable).",
+        "operationId": "rollback_version_api_v1_versions__version_id__rollback_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RollbackOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Rollback Version",
+        "tags": [
+          "quality"
         ]
       }
     },

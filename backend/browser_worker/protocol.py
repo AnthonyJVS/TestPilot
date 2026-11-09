@@ -204,6 +204,9 @@ class StepResult(_Model):
     console: list[ConsoleEntry] = Field(default_factory=list)
     network_failures: list[NetworkEntry] = Field(default_factory=list)
     blocked: list[BlockedRequest] = Field(default_factory=list)
+    # Accessibility tree of the page when the step failed (roles, names, texts): evidence for
+    # failure analysis. Field values may appear; the orchestrator scrubs secret values.
+    page_snapshot: str | None = Field(default=None, max_length=12_000)
 
 
 class CloseSessionResult(_Model):

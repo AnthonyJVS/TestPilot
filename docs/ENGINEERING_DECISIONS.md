@@ -219,3 +219,18 @@ before the first step.
 **Consequences.** One execution model and one security boundary for tests and workflows; the
 Studio cannot express browser actions the DSL does not allow.
 
+## ADR-021 Evidence first, hypotheses second; repairs as validated plan edits (2026-11-09, accepted; implemented in M7)
+
+**Context.** An AI explanation of a failure is only useful if people can tell what was observed
+from what is guessed, and an AI "fix" must not quietly change what a test checks.
+**Decision.** TestPilot builds numbered evidence from the persisted run (failing step, error,
+URL, accessibility snapshot captured by the worker on failure, console, network, history) and
+the model must cite it; unknown citations are dropped. Repairs are edits to the restricted plan
+(replace / insert_after / remove by index), diffed and validated by TestPilot, and applied only
+through the normal approval path as a new version. Rollback moves the current-version pointer;
+versions stay immutable. The prompt forbids weakening assertions; `no_test_change` is a valid
+answer.
+**Consequences.** Every repair is reviewable as a step diff and reversible; the AI cannot create
+steps outside the DSL, add domains or reveal secrets. Analysis runs synchronously in the request
+(like plan generation) and costs one AI call; repair costs one more.
+

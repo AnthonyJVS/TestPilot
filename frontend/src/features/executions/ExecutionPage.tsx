@@ -7,6 +7,7 @@ import { ErrorState } from "@/components/common/ErrorState";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useVersion } from "@/features/projects/api";
+import { FailurePanel } from "@/features/quality/FailurePanel";
 import { cn, formatDateTime } from "@/lib/utils";
 import type { Execution, ExecutionEvent, ExecutionStep, PlanStep, TestExecution } from "@/types/api";
 
@@ -224,6 +225,7 @@ function ExecutionView({ execution, test, events, streamState }: { execution: Ex
         </section>
       </div>
 
+      {execution.status === "failed" || execution.status === "error" ? <FailurePanel executionId={execution.id} /> : null}
       <Timeline events={events} at={replay.at} replaying={replay.replaying} onSeek={replay.seek} />
       <ArtifactsSection execution={execution} live={live} />
     </div>

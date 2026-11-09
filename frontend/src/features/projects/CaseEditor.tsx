@@ -281,7 +281,7 @@ export function CaseEditor({ project, caseId, suites }: { project: Project; case
       ) : null}
 
       {data.versions.length ? (
-        <CodeViewer key={data.current_version_id ?? "none"} versions={data.versions} currentVersionId={data.current_version_id} />
+        <CodeViewer key={data.current_version_id ?? "none"} caseId={data.id} versions={data.versions} currentVersionId={data.current_version_id} />
       ) : null}
 
       {currentVersion ? (

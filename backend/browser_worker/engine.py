@@ -75,6 +75,7 @@ MAX_CONSOLE_ENTRIES = 300
 MAX_NETWORK_ENTRIES = 2_000
 MAX_SESSION_SECONDS = 30 * 60
 MAX_LIVE_FRAMES = 300
+MAX_SNAPSHOT_CHARS = 10_000
 _ANSI = re.compile(r"\x1b\[[0-9;]*m")
 _CONSOLE_LEVELS = {"log", "info", "warning", "error", "debug"}
 
@@ -396,6 +397,7 @@ class BrowserEngine:
                 if frame is not None:
                     artifacts.append(frame)
             url, title = await self._location(session)
+            snapshot = await self._snapshot(session) if error is not None else None
             session.touch()
             result = StepResult(
                 index=params.index,
@@ -408,6 +410,7 @@ class BrowserEngine:
                 console=session.console,
                 network_failures=session.network_failures,
                 blocked=session.blocked,
+                page_snapshot=snapshot,
             )
             session.console, session.network_failures, session.blocked = [], [], []
             return result
@@ -544,6 +547,19 @@ class BrowserEngine:
         except PlaywrightError:
             return None
         return _artifact(self.artifacts_root, path, "screenshot", "image/jpeg", index)
+
+    @staticmethod
+    async def _snapshot(session: _Session) -> str | None:
+        """ARIA snapshot of the page body, truncated; None if the page is gone."""
+        if session.closed or session.page.is_closed():
+            return None
+        try:
+            text = await session.page.locator("body").aria_snapshot(timeout=3_000)
+        except PlaywrightError:
+            return None
+        if len(text) > MAX_SNAPSHOT_CHARS:
+            text = text[:MAX_SNAPSHOT_CHARS] + "\n… (truncated)"
+        return text
 
     @staticmethod
     async def _location(session: _Session) -> tuple[str | None, str | None]:
