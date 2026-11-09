@@ -66,6 +66,18 @@ def build_commands(plan: TestPlan, variables: dict[str, Variable]) -> list[Brows
     return [_command(step, variables) for step in plan.steps]
 
 
+def command_for(step: Step, variables: dict[str, Variable]) -> BrowserCommand:
+    """One step with its test data substituted (workflow browser nodes)."""
+    missing = [
+        f"{{{{{kind}.{name}}}}}"
+        for kind, name in placeholders(step.value)
+        if (v := variables.get(name)) is None or v.is_secret != (kind == "secret")
+    ]
+    if missing:
+        raise MissingVariablesError(missing)
+    return _command(step, variables)
+
+
 def _command(step: Step, variables: dict[str, Variable]) -> BrowserCommand:
     locator = (
         BrowserLocator(

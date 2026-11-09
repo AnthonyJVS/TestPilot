@@ -40,15 +40,8 @@ export const NAV_ITEMS: NavItem[] = [
     path: "/workflows",
     label: "Workflow Studio",
     icon: Workflow,
-    status: "planned",
-    milestone: 5,
+    status: "available",
     summary: "Design test pipelines by connecting AI, browser, logic and data nodes.",
-    plannedCapabilities: [
-      "Searchable node palette with drag-and-drop onto a canvas",
-      "Typed connections, conditional branches and error paths",
-      "Retry and timeout policies per node",
-      "Validation, saved versions and one-click runs",
-    ],
   },
   {
     path: "/executions",

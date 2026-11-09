@@ -6,9 +6,10 @@ import uuid
 from collections.abc import Sequence
 from datetime import timedelta
 from pathlib import Path
+from typing import Any
 from urllib.parse import urlsplit
 
-from sqlalchemy import func, select, update
+from sqlalchemy import case, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -20,6 +21,7 @@ from app.infrastructure.database.models import (
     ExecutionArtifact,
     ExecutionEvent,
     ExecutionStep,
+    NodeExecution,
     Project,
     ProjectEnvironment,
     TestCase,
@@ -27,6 +29,7 @@ from app.infrastructure.database.models import (
     TestSuite,
     TestVersion,
     WorkflowExecution,
+    WorkflowVersion,
 )
 from app.infrastructure.database.models.execution import TERMINAL_STATUSES
 from app.schemas.execution import RunCreate
@@ -250,6 +253,7 @@ class ExecutionService:
                         TestExecution.steps
                     ),
                     selectinload(WorkflowExecution.artifacts),
+                    selectinload(WorkflowExecution.node_executions),
                 )
                 .where(WorkflowExecution.id == execution_id, WorkflowExecution.owner_id == owner_id)
                 .execution_options(populate_existing=True)
@@ -268,10 +272,11 @@ class ExecutionService:
         project_id: uuid.UUID | None = None,
         test_case_id: uuid.UUID | None = None,
         limit: int = 50,
-    ) -> list[tuple[WorkflowExecution, TestExecution]]:
+        workflow_id: uuid.UUID | None = None,
+    ) -> list[tuple[WorkflowExecution, TestExecution | None, tuple[int, int]]]:
         query = (
             select(WorkflowExecution, TestExecution)
-            .join(TestExecution, TestExecution.execution_id == WorkflowExecution.id)
+            .outerjoin(TestExecution, TestExecution.execution_id == WorkflowExecution.id)
             .where(WorkflowExecution.owner_id == owner_id)
             .order_by(WorkflowExecution.created_at.desc())
             .limit(limit)
@@ -280,15 +285,39 @@ class ExecutionService:
             query = query.where(WorkflowExecution.project_id == project_id)
         if test_case_id is not None:
             query = query.where(TestExecution.test_case_id == test_case_id)
+        if workflow_id is not None:
+            query = query.where(WorkflowExecution.workflow_id == workflow_id)
         rows = [(e, t) for e, t in (await self._db.execute(query)).all()]
         expired = False
         for execution, _ in rows:
             expired = await self._expire_if_stale(execution) or expired
         if expired:
             return await self.list_runs(
-                owner_id, project_id=project_id, test_case_id=test_case_id, limit=limit
+                owner_id,
+                project_id=project_id,
+                test_case_id=test_case_id,
+                limit=limit,
+                workflow_id=workflow_id,
             )
-        return rows
+        counts: dict[uuid.UUID, tuple[int, int]] = {}
+        workflow_ids = [e.id for e, t in rows if t is None]
+        if workflow_ids:
+            completed = func.sum(case((NodeExecution.status == "completed", 1), else_=0))
+            for execution_id, total, done in (
+                await self._db.execute(
+                    select(NodeExecution.execution_id, func.count(), completed)
+                    .where(NodeExecution.execution_id.in_(workflow_ids))
+                    .group_by(NodeExecution.execution_id)
+                )
+            ).all():
+                counts[execution_id] = (int(total), int(done or 0))
+        return [(e, t, counts.get(e.id, (0, 0))) for e, t in rows]
+
+    async def workflow_graph(self, execution: WorkflowExecution) -> dict[str, Any] | None:
+        if execution.workflow_version_id is None:
+            return None
+        version = await self._db.get(WorkflowVersion, execution.workflow_version_id)
+        return version.graph if version else None
 
     async def events(
         self, owner_id: uuid.UUID, execution_id: uuid.UUID, *, after_seq: int, limit: int

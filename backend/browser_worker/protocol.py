@@ -108,6 +108,8 @@ class OpenSessionParams(_Model):
     capture: CaptureOptions = CaptureOptions()
     default_timeout_ms: int = Field(default=10_000, ge=1_000, le=120_000)
     navigation_timeout_ms: int = Field(default=30_000, ge=1_000, le=120_000)
+    # Prefix for session-level artifacts when one execution opens several sessions.
+    label: str | None = Field(default=None, pattern=r"^[a-z0-9][a-z0-9-]{0,19}$")
 
     @field_validator("base_url")
     @classmethod

@@ -7,11 +7,12 @@ import { ErrorState } from "@/components/common/ErrorState";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn, formatDateTime } from "@/lib/utils";
-import type { Artifact, Execution, ExecutionEvent, ExecutionStep } from "@/types/api";
+import type { Artifact, Execution, ExecutionEvent, ExecutionStep, TestExecution } from "@/types/api";
 
 import { downloadArtifact, TERMINAL, useArtifactUrl, useCancelRun, useExecution, useExecutionEvents, type StreamState } from "./api";
 import { BROWSER_LABELS, formatMs } from "./format";
 import { RunStatus, StepStatus } from "./status";
+import { WorkflowRunView } from "./WorkflowRunView";
 
 const ARTIFACT_LABELS: Record<Artifact["kind"], string> = {
   screenshot: "Screenshot",
@@ -40,11 +41,23 @@ export function ExecutionPage() {
       </div>
     );
   }
-  return <ExecutionView execution={execution.data} events={events} streamState={state} />;
+  const data = execution.data;
+  if (data.workflow) return <WorkflowRunView execution={data} workflow={data.workflow} events={events} streamState={state} />;
+  if (!data.test) return null;
+  return <ExecutionView execution={data} test={data.test} events={events} streamState={state} />;
 }
 
-function ExecutionView({ execution, events, streamState }: { execution: Execution; events: ExecutionEvent[]; streamState: StreamState }) {
-  const test = execution.test;
+function ExecutionView({
+  execution,
+  test,
+  events,
+  streamState,
+}: {
+  execution: Execution;
+  test: TestExecution;
+  events: ExecutionEvent[];
+  streamState: StreamState;
+}) {
   const live = !TERMINAL.has(execution.status);
   const cancel = useCancelRun(execution.id);
   const [selected, setSelected] = useState<number | null>(null);
@@ -63,7 +76,6 @@ function ExecutionView({ execution, events, streamState }: { execution: Executio
   const latestStep = Math.max(-1, ...shots.keys());
   const previewIndex = selected ?? (latestStep >= 0 ? latestStep : null);
   const previewStep = previewIndex !== null ? test.steps[previewIndex] : undefined;
-  const files = execution.artifacts.filter((a) => a.kind !== "screenshot" || a.content_type === "image/png");
   const progress = test.steps_total ? (test.steps.filter((s) => s.status !== "pending" && s.status !== "running").length / test.steps_total) * 100 : 0;
 
   return (
@@ -163,62 +175,74 @@ function ExecutionView({ execution, events, streamState }: { execution: Executio
               </Button>
             ) : null}
           </div>
-          <Preview artifact={previewIndex !== null ? shots.get(previewIndex) : undefined} step={previewStep} live={live} />
+          <Preview
+            artifact={previewIndex !== null ? shots.get(previewIndex) : undefined}
+            url={previewStep?.url ?? null}
+            caption={previewStep ? `After step ${previewStep.index + 1}: ${previewStep.description}` : null}
+            live={live}
+          />
         </section>
       </div>
 
       <Timeline events={events} />
 
-      <section aria-labelledby="artifacts-heading" className="space-y-3">
-        <h2 id="artifacts-heading" className="text-[15px] font-semibold [font-stretch:100%]">
-          Artifacts
-        </h2>
-        {files.length === 0 ? (
-          <p className="text-[13px] text-faint">{live ? "Artifacts appear when the run finishes." : "No downloadable artifacts."}</p>
-        ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-panel border border-border bg-panel">
-            {files.map((artifact) => (
-              <li key={artifact.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <FileArchive className="size-4 shrink-0 text-faint" aria-hidden />
-                  <div className="min-w-0">
-                    <p className="text-sm">{ARTIFACT_LABELS[artifact.kind]}</p>
-                    <p className="truncate font-mono text-xs text-faint">
-                      {artifact.name} · {formatBytes(artifact.size_bytes)}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  {artifact.kind === "trace" ? (
-                    <a
-                      href="https://trace.playwright.dev/"
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="inline-flex items-center gap-1 text-xs text-muted hover:text-text"
-                    >
-                      Open the trace viewer <ExternalLink className="size-3" aria-hidden />
-                    </a>
-                  ) : null}
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() =>
-                      void downloadArtifact(artifact.id, artifact.name).catch((error: Error) => toast.error(error.message))
-                    }
-                  >
-                    <Download /> Download
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <ArtifactsSection execution={execution} live={live} />
     </div>
   );
 }
 
-function LiveBadge({ state, live }: { state: StreamState; live: boolean }) {
+export function ArtifactsSection({ execution, live }: { execution: Execution; live: boolean }) {
+  const files = execution.artifacts.filter((a) => a.kind !== "screenshot" || a.content_type === "image/png");
+  return (
+    <section aria-labelledby="artifacts-heading" className="space-y-3">
+      <h2 id="artifacts-heading" className="text-[15px] font-semibold [font-stretch:100%]">
+        Artifacts
+      </h2>
+      {files.length === 0 ? (
+        <p className="text-[13px] text-faint">{live ? "Artifacts appear when the run finishes." : "No downloadable artifacts."}</p>
+      ) : (
+        <ul className="divide-y divide-border overflow-hidden rounded-panel border border-border bg-panel">
+          {files.map((artifact) => (
+            <li key={artifact.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <FileArchive className="size-4 shrink-0 text-faint" aria-hidden />
+                <div className="min-w-0">
+                  <p className="text-sm">{ARTIFACT_LABELS[artifact.kind]}</p>
+                  <p className="truncate font-mono text-xs text-faint">
+                    {artifact.name} · {formatBytes(artifact.size_bytes)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {artifact.kind === "trace" ? (
+                  <a
+                    href="https://trace.playwright.dev/"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="inline-flex items-center gap-1 text-xs text-muted hover:text-text"
+                  >
+                    Open the trace viewer <ExternalLink className="size-3" aria-hidden />
+                  </a>
+                ) : null}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() =>
+                    void downloadArtifact(artifact.id, artifact.name).catch((error: Error) => toast.error(error.message))
+                  }
+                >
+                  <Download /> Download
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+export function LiveBadge({ state, live }: { state: StreamState; live: boolean }) {
   if (!live) return null;
   const label = state === "open" ? "Live" : state === "reconnecting" || state === "connecting" ? "Connecting…" : "Updates paused";
   return (
@@ -256,7 +280,17 @@ function StepRow({ step, hasShot, selected, onSelect }: { step: ExecutionStep; h
   );
 }
 
-function Preview({ artifact, step, live }: { artifact: Artifact | undefined; step: ExecutionStep | undefined; live: boolean }) {
+export function Preview({
+  artifact,
+  url,
+  caption,
+  live,
+}: {
+  artifact: Artifact | undefined;
+  url: string | null;
+  caption: string | null;
+  live: boolean;
+}) {
   const image = useArtifactUrl(artifact?.id);
   return (
     <figure className="overflow-hidden rounded-panel border border-border bg-panel">
@@ -266,11 +300,11 @@ function Preview({ artifact, step, live }: { artifact: Artifact | undefined; ste
           <span className="size-2.5 rounded-full bg-border-strong" />
           <span className="size-2.5 rounded-full bg-border-strong" />
         </span>
-        <span className="min-w-0 flex-1 truncate rounded-control bg-sunken px-2.5 py-1 font-mono text-xs text-muted">{step?.url ?? "about:blank"}</span>
+        <span className="min-w-0 flex-1 truncate rounded-control bg-sunken px-2.5 py-1 font-mono text-xs text-muted">{url ?? "about:blank"}</span>
       </div>
       <div className="relative aspect-[16/10] bg-sunken">
         {image.url ? (
-          <img src={image.url} alt={step ? `Page after step ${step.index + 1}: ${step.description}` : "Page screenshot"} className="size-full object-contain object-top" />
+          <img src={image.url} alt={caption ?? "Page screenshot"} className="size-full object-contain object-top" />
         ) : (
           <div className="flex size-full items-center justify-center text-[13px] text-faint">
             {image.loading ? (
@@ -280,13 +314,13 @@ function Preview({ artifact, step, live }: { artifact: Artifact | undefined; ste
             ) : live ? (
               "Waiting for the first screenshot…"
             ) : (
-              "No screenshot for this step."
+              "No screenshot here."
             )}
           </div>
         )}
       </div>
       <figcaption className="border-t border-border px-3 py-2 text-xs text-faint">
-        {step ? `After step ${step.index + 1}: ${step.description}` : "Real screenshots from the run appear here after each step."}
+        {caption ?? "Real screenshots from the run appear here after each step."}
       </figcaption>
     </figure>
   );
@@ -307,7 +341,7 @@ function matches(event: ExecutionEvent, filter: Filter): boolean {
   return event.category === "system" || event.category === "node";
 }
 
-function Timeline({ events }: { events: ExecutionEvent[] }) {
+export function Timeline({ events }: { events: ExecutionEvent[] }) {
   const [filter, setFilter] = useState<Filter>("all");
   const start = events[0] ? new Date(events[0].ts).getTime() : 0;
   const shown = events.filter((e) => matches(e, filter));

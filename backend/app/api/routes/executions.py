@@ -6,12 +6,13 @@ import json
 import time
 import uuid
 from collections.abc import AsyncIterator
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Header, Query, Request, status
 from fastapi.responses import FileResponse, StreamingResponse
 
 from app.api.dependencies import Ctx, CurrentUser, DbSession
+from app.domain.workflow import WorkflowGraph
 from app.infrastructure.database.models import (
     ExecutionArtifact,
     ExecutionEvent,
@@ -26,8 +27,10 @@ from app.schemas.execution import (
     ExecutionRuntimeOut,
     ExecutionStepOut,
     ExecutionSummaryOut,
+    NodeExecutionOut,
     RunCreate,
     TestExecutionOut,
+    WorkflowRunOut,
 )
 from app.services.execution.execution_service import ExecutionService, fetch_events
 from app.services.execution.runtime import ExecutionRuntime
@@ -85,12 +88,33 @@ def _artifact_out(artifact: ExecutionArtifact) -> ArtifactOut:
     return ArtifactOut.model_validate(artifact, from_attributes=True)
 
 
-def _execution_out(execution: WorkflowExecution) -> ExecutionOut:
+def _workflow_out(
+    execution: WorkflowExecution, graph: dict[str, Any] | None
+) -> WorkflowRunOut | None:
+    if execution.kind != "workflow":
+        return None
+    snapshot = execution.snapshot
+    order = {}
+    if graph:
+        order = {node["id"]: i for i, node in enumerate(graph.get("nodes", []))}
+    nodes = sorted(execution.node_executions, key=lambda n: order.get(n.node_id, 10_000))
+    return WorkflowRunOut(
+        workflow_id=execution.workflow_id,
+        workflow_name=str(snapshot.get("workflow_name", "")),
+        version=int(snapshot.get("version", 0)),
+        graph=WorkflowGraph.model_validate(graph) if graph else None,
+        nodes=[NodeExecutionOut.model_validate(n, from_attributes=True) for n in nodes],
+    )
+
+
+def _execution_out(
+    execution: WorkflowExecution, graph: dict[str, Any] | None = None
+) -> ExecutionOut:
     snapshot = execution.snapshot
     return ExecutionOut(
         id=execution.id,
         project_id=execution.project_id,
-        kind="test_run",
+        kind=execution.kind,
         status=execution.status,
         trigger=execution.trigger,
         error_code=execution.error_code,
@@ -103,24 +127,29 @@ def _execution_out(execution: WorkflowExecution) -> ExecutionOut:
         isolated=bool(snapshot.get("isolated")),
         notes=list(snapshot.get("notes", [])),
         capture=dict(snapshot.get("capture", {})),
-        test=_test_out(execution.test_executions[0]),
+        test=_test_out(execution.test_executions[0]) if execution.test_executions else None,
+        workflow=_workflow_out(execution, graph),
         artifacts=[_artifact_out(a) for a in execution.artifacts],
     )
 
 
-def _summary_out(execution: WorkflowExecution, test: TestExecution) -> ExecutionSummaryOut:
+def _summary_out(
+    execution: WorkflowExecution, test: TestExecution | None, counts: tuple[int, int]
+) -> ExecutionSummaryOut:
+    snapshot = execution.snapshot
     return ExecutionSummaryOut(
         id=execution.id,
         project_id=execution.project_id,
-        kind="test_run",
+        kind=execution.kind,
+        workflow_id=execution.workflow_id,
         status=execution.status,
-        test_case_id=test.test_case_id,
-        test_name=test.test_name,
-        version_number=test.version_number,
-        environment_name=test.environment_name,
-        browser=test.browser,
-        steps_total=test.steps_total,
-        steps_passed=test.steps_passed,
+        test_case_id=test.test_case_id if test else None,
+        test_name=test.test_name if test else str(snapshot.get("workflow_name", "Workflow")),
+        version_number=test.version_number if test else int(snapshot.get("version", 0)),
+        environment_name=test.environment_name if test else "workflow",
+        browser=test.browser if test else "chromium",
+        steps_total=test.steps_total if test else counts[0],
+        steps_passed=test.steps_passed if test else counts[1],
         error_message=execution.error_message,
         created_at=execution.created_at,
         started_at=execution.started_at,
@@ -175,26 +204,33 @@ async def list_executions(
     executions: Executions,
     project_id: uuid.UUID | None = None,
     test_case_id: uuid.UUID | None = None,
+    workflow_id: uuid.UUID | None = None,
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
 ) -> list[ExecutionSummaryOut]:
     rows = await executions.list_runs(
-        user.id, project_id=project_id, test_case_id=test_case_id, limit=limit
+        user.id,
+        project_id=project_id,
+        test_case_id=test_case_id,
+        workflow_id=workflow_id,
+        limit=limit,
     )
-    return [_summary_out(execution, test) for execution, test in rows]
+    return [_summary_out(execution, test, counts) for execution, test, counts in rows]
 
 
 @router.get("/executions/{execution_id}", response_model=ExecutionOut)
 async def get_execution(
     execution_id: uuid.UUID, user: CurrentUser, executions: Executions
 ) -> ExecutionOut:
-    return _execution_out(await executions.get(user.id, execution_id))
+    execution = await executions.get(user.id, execution_id)
+    return _execution_out(execution, await executions.workflow_graph(execution))
 
 
 @router.post("/executions/{execution_id}/cancel", response_model=ExecutionOut)
 async def cancel_execution(
     execution_id: uuid.UUID, user: CurrentUser, executions: Executions, ctx: Ctx
 ) -> ExecutionOut:
-    return _execution_out(await executions.cancel(user.id, execution_id, ctx))
+    execution = await executions.cancel(user.id, execution_id, ctx)
+    return _execution_out(execution, await executions.workflow_graph(execution))
 
 
 @router.get("/executions/{execution_id}/events", response_model=list[ExecutionEventOut])

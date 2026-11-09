@@ -47,13 +47,16 @@ export function ExecutionsList({
             <div className="min-w-0 sm:order-none">
               {showTest ? (
                 <p className="truncate text-sm font-medium">
+                  {run.kind === "workflow" ? <span className="mr-1.5 rounded bg-raised px-1.5 py-0.5 text-[10px] font-normal tracking-wide text-muted uppercase">Workflow</span> : null}
                   {run.test_name} <span className="font-normal text-faint">v{run.version_number}</span>
                 </p>
               ) : (
                 <p className="text-sm">Version {run.version_number}</p>
               )}
               <p className="truncate text-xs text-faint">
-                {run.environment_name} · {BROWSER_LABELS[run.browser] ?? run.browser} · {run.steps_passed}/{run.steps_total} steps
+                {run.kind === "workflow"
+                  ? `${run.steps_passed}/${run.steps_total} nodes completed`
+                  : `${run.environment_name} · ${BROWSER_LABELS[run.browser] ?? run.browser} · ${run.steps_passed}/${run.steps_total} steps`}
                 {run.error_message && run.status !== "passed" ? ` · ${run.error_message}` : ""}
               </p>
             </div>

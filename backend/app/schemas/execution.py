@@ -6,6 +6,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+from app.domain.workflow import WorkflowGraph
+
 ExecutionStatus = Literal["queued", "running", "passed", "failed", "error", "cancelled"]
 StepStatus = Literal["pending", "running", "passed", "failed", "skipped"]
 Browser = Literal["chromium", "firefox", "webkit"]
@@ -41,7 +43,34 @@ class ArtifactOut(BaseModel):
     content_type: str
     size_bytes: int
     step_index: int | None
+    node_id: str | None
     created_at: datetime
+
+
+NodeStatus = Literal["waiting", "running", "completed", "failed", "skipped", "cancelled"]
+
+
+class NodeExecutionOut(BaseModel):
+    node_id: str
+    node_type: str
+    label: str
+    status: NodeStatus
+    attempts: int
+    started_at: datetime | None
+    finished_at: datetime | None
+    duration_ms: int | None
+    summary: str | None
+    output: dict[str, Any] | None
+    error_code: str | None
+    error_message: str | None
+
+
+class WorkflowRunOut(BaseModel):
+    workflow_id: uuid.UUID | None
+    workflow_name: str
+    version: int
+    graph: WorkflowGraph | None
+    nodes: list[NodeExecutionOut]
 
 
 class TestExecutionOut(BaseModel):
@@ -68,7 +97,8 @@ class TestExecutionOut(BaseModel):
 class ExecutionSummaryOut(BaseModel):
     id: uuid.UUID
     project_id: uuid.UUID
-    kind: Literal["test_run"]
+    kind: Literal["test_run", "workflow"]
+    workflow_id: uuid.UUID | None
     status: ExecutionStatus
     test_case_id: uuid.UUID | None
     test_name: str
@@ -87,7 +117,7 @@ class ExecutionSummaryOut(BaseModel):
 class ExecutionOut(BaseModel):
     id: uuid.UUID
     project_id: uuid.UUID
-    kind: Literal["test_run"]
+    kind: Literal["test_run", "workflow"]
     status: ExecutionStatus
     trigger: str
     error_code: str | None
@@ -100,7 +130,8 @@ class ExecutionOut(BaseModel):
     isolated: bool = Field(description="True when the browser ran in the isolated worker.")
     notes: list[str]
     capture: dict[str, Any]
-    test: TestExecutionOut
+    test: TestExecutionOut | None
+    workflow: WorkflowRunOut | None
     artifacts: list[ArtifactOut]
 
 

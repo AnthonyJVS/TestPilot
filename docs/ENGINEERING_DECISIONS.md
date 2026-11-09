@@ -198,3 +198,24 @@ secret values before it is stored or streamed. Network logs keep method, URL wit
 string, status and timing only; no headers or bodies.
 **Consequences.** Secret-typing runs lose traces; plain-data runs keep full evidence.
 
+## ADR-019 Workflow graphs as immutable JSON documents (2026-11-09, accepted; implemented in M5)
+
+**Context.** The architecture sketch listed `workflow_nodes` and `workflow_edges` tables.
+**Decision.** A `workflow_versions` row stores the whole graph (nodes with config, retry
+policy, timeout and position; edges between named handles) as one Pydantic-validated JSON
+document. Versions are immutable; saving an unchanged graph creates no version; executions
+pin `workflow_version_id`. Per-run state lives in `workflow_node_executions`.
+**Consequences.** Graphs are always read and written whole, so no joins or partial updates are
+needed, and a version is trivially immutable. Querying "all workflows that use node type X"
+needs a JSON query — acceptable at this scale.
+
+## ADR-020 Browser workflow nodes compile to the test-plan DSL (2026-11-09, accepted; implemented in M5)
+
+**Decision.** Each browser node builds one `Step` of the restricted DSL from its config and
+runs it through the same orchestrator code path, browser worker, network policy, secret
+masking and scrubbing as approved tests. Generated plans (AI Test Planner) only run through
+`Run Plan`, which validates them against the project (allowed domains, declared test data)
+before the first step.
+**Consequences.** One execution model and one security boundary for tests and workflows; the
+Studio cannot express browser actions the DSL does not allow.
+

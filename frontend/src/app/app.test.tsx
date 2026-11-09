@@ -75,11 +75,11 @@ describe("authentication flow", () => {
 describe("application shell", () => {
   it("labels planned sections honestly instead of showing fake data", async () => {
     mockFetch((url) => (url === "/api/v1/auth/refresh" ? json(200, tokenResponse()) : undefined), status, noAudit);
-    renderApp("/workflows");
+    renderApp("/reports");
 
-    expect(await screen.findByRole("heading", { name: "Workflow Studio" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Reports" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Not available yet" })).toBeInTheDocument();
-    expect(screen.getByText(/planned for milestone 5/i)).toBeInTheDocument();
+    expect(screen.getByText(/planned for milestone 8/i)).toBeInTheDocument();
 
     const nav = screen.getAllByRole("navigation", { name: "Main" })[0]!;
     for (const label of ["Dashboard", "Projects", "Workflow Studio", "Executions", "AI Providers", "Reports", "Settings"]) {

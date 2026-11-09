@@ -56,6 +56,20 @@ export type ExecutionEvent = Schemas["ExecutionEventOut"];
 export type Artifact = Schemas["ArtifactOut"];
 export type ExecutionRuntime = Schemas["ExecutionRuntimeOut"];
 export type BrowserName = Schemas["RunCreate"]["browser"];
+export type TestExecution = Schemas["TestExecutionOut"];
+export type NodeExecution = Schemas["NodeExecutionOut"];
+export type WorkflowRun = Schemas["WorkflowRunOut"];
+
+export type NodeTypeDef = Schemas["NodeTypeOut"];
+export type NodePort = Schemas["PortOut"];
+export type WorkflowSummary = Schemas["WorkflowSummaryOut"];
+export type Workflow = Schemas["WorkflowOut"];
+export type WorkflowCreate = Schemas["WorkflowCreate"];
+export type WorkflowGraph = Schemas["WorkflowGraph"];
+export type GraphNode = Schemas["GraphNode"];
+export type GraphEdge = Schemas["GraphEdge"];
+export type GraphIssue = Schemas["GraphIssue"];
+export type RetryPolicy = Schemas["RetryPolicy"];
 
 /** The error envelope every backend failure uses. */
 export interface ApiErrorBody {

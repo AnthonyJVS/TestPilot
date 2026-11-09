@@ -6,13 +6,14 @@ Describe a test in plain language. TestPilot turns it into a structured, reviewa
 plan, executes it in an isolated browser, streams every step live, and explains failures —
 using one AI provider (a single Gemini key is enough) or several, routed per task.
 
-> **Project status: Milestone 4 (browser execution) of 8.** Authentication, the dashboard,
+> **Project status: Milestone 5 (Workflow Studio) of 8.** Authentication, the dashboard,
 > the Docker stack, the AI provider layer (Gemini, Claude, OpenAI with Simple/Advanced
 > routing), the Testing Workspace (projects, encrypted test data, AI-generated editable test
 > plans, approval, versioned Playwright code) and real test runs in an isolated browser
-> worker (live events, step screenshots, traces, history) work today. Workflow Studio and the
-> full Execution Center are designed and scheduled — they are labelled *Planned* in the UI
-> and nothing about them is simulated.
+> worker (live events, step screenshots, traces, history) and Workflow Studio (visual node
+> editor with a real DAG engine: branches, retries, timeouts, error paths, AI and browser
+> nodes) work today. The full Execution Center, failure analysis and reports are scheduled —
+> they are labelled *Planned* in the UI and nothing about them is simulated.
 > See the [roadmap](docs/DEVELOPMENT_ROADMAP.md).
 
 ## Features
@@ -25,8 +26,8 @@ using one AI provider (a single Gemini key is enough) or several, routed per tas
 | Multi-LLM: Gemini, Claude, OpenAI; Simple mode (one key) and Advanced per-task routing; encrypted keys; model discovery and manual IDs; routing checks; explicit fallback; daily limits; AI request log | ✅ Milestone 2 |
 | Testing Workspace: projects, environments, encrypted test data, suites, plain-language scenarios, AI requirement analysis and test plans, plan editor with validation, approval into immutable versions, deterministic Playwright code (Python and TypeScript) — see [TEST_PLAN_DSL.md](docs/TEST_PLAN_DSL.md) | ✅ Milestone 3 |
 | Isolated browser execution (Chromium, Firefox, WebKit): live step events over SSE, screenshots per step with secret masking, Playwright traces, video, console and network capture, network policy, cancellation, run history — see [BROWSER_EXECUTION.md](docs/BROWSER_EXECUTION.md) | ✅ Milestone 4 |
-| Workflow Studio: n8n-style node editor with DAG execution | Planned — M5 |
-| Execution Center: live canvas, timeline, node inspector, browser preview | Planned — M6 |
+| Workflow Studio: node palette, XYFlow canvas with typed ports, inspector generated from node schemas, live validation, immutable versions, duplicate, templates; DAG engine with branches, merges, retries, timeouts, error paths and cancellation; browser, test, AI and logic nodes — see [WORKFLOW_ENGINE.md](docs/WORKFLOW_ENGINE.md) | ✅ Milestone 5 |
+| Execution Center: live workflow canvas, node inspector, timeline and browser preview are in place (M4/M5); throttled in-progress frames, filters and replay polish | Planned — M6 |
 | Failure analysis and human-approved repairs | Planned — M7 |
 | HTML reports, AI usage dashboard, more providers | Planned — M8 |
 
@@ -59,8 +60,8 @@ Details: [ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
 - **Backend:** Python 3.12+ (images use 3.13), FastAPI, Pydantic 2, SQLAlchemy 2 (async),
   Alembic, PostgreSQL 17, Redis 7, Argon2id, PyJWT, Celery 5, Playwright 1.62.
 - **Frontend:** React 19, TypeScript 5.9, Vite 8, Tailwind CSS 4, shadcn/ui patterns on
-  Radix, TanStack Query 5, React Router 8, Zustand 5. XYFlow and Recharts arrive with the
-  studio and usage dashboard.
+  Radix, TanStack Query 5, React Router 8, Zustand 5, XYFlow 12. Recharts arrives with the
+  usage dashboard.
 - **Tooling:** pytest, Vitest + React Testing Library, ruff, mypy (strict), ESLint, Docker
   Compose, GitHub Actions.
 
@@ -193,8 +194,11 @@ secret redaction in logs, strict security headers. See [SECURITY.md](SECURITY.md
 - No email verification or password reset flow yet.
 - Test runs were verified locally in development mode only; the isolated Docker path
   (Celery + browser worker) is verified by the CI smoke run, not on the development machine.
-- AI plan generation is still synchronous (it moves to the job queue with the workflow engine
-  in Milestone 5). Artifacts of deleted projects stay on disk until a retention job exists (M8).
+- The Testing Workspace's "Generate with AI" button is still synchronous; the same analysis
+  and planning run on the job queue as workflow AI nodes. Artifacts of deleted projects stay on
+  disk until a retention job exists (M8).
+- Workflow Studio v1: no Approval Gate, Switch or data-transform nodes yet (shown as planned);
+  Merge waits for all branches (no "first input" mode); loops are not supported by design.
 - Only Chromium is installed for local development; Firefox and WebKit ship in the Docker
   browser worker (`python -m playwright install firefox webkit` adds them locally).
 

@@ -25,6 +25,11 @@ from app.infrastructure.database.models.testing import (
     TestSuite,
     TestVersion,
 )
+from app.infrastructure.database.models.workflow import (
+    NodeExecution,
+    Workflow,
+    WorkflowVersion,
+)
 
 __all__ = [
     "AICredential",
@@ -39,6 +44,7 @@ __all__ = [
     "ExecutionArtifact",
     "ExecutionEvent",
     "ExecutionStep",
+    "NodeExecution",
     "Project",
     "ProjectEnvironment",
     "RefreshToken",
@@ -48,5 +54,7 @@ __all__ = [
     "TestSuite",
     "TestVersion",
     "User",
+    "Workflow",
     "WorkflowExecution",
+    "WorkflowVersion",
 ]

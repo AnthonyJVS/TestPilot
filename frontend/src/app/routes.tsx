@@ -17,6 +17,8 @@ import { ProjectsPage } from "@/features/projects/ProjectsPage";
 import { SettingsTab } from "@/features/projects/SettingsTab";
 import { TestsTab } from "@/features/projects/TestsTab";
 import { SettingsPage } from "@/features/settings/SettingsPage";
+import { StudioPage } from "@/features/workflows/StudioPage";
+import { WorkflowsPage } from "@/features/workflows/WorkflowsPage";
 
 import { NAV_ITEMS } from "./navigation";
 
@@ -56,6 +58,8 @@ export const routes: RouteObject[] = [
                   { path: "settings", element: <SettingsTab /> },
                 ],
               },
+              { path: "workflows", element: <WorkflowsPage /> },
+              { path: "workflows/:workflowId", element: <StudioPage /> },
               { path: "executions", element: <ExecutionsPage /> },
               { path: "executions/:executionId", element: <ExecutionPage /> },
               { path: "ai-providers", element: <AiProvidersPage /> },

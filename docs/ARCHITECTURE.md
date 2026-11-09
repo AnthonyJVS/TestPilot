@@ -13,7 +13,7 @@
 | Additional providers (DeepSeek, Mistral, xAI, OpenRouter, Azure, Bedrock, Ollama, LM Studio) | Planned (M8), shown as unavailable |
 | Testing Workspace: projects, environments, encrypted test data, suites, tests, AI plan generation, plan editor, approval, versions, Playwright code | Implemented (M3); AI generation verified with test doubles, live run pending a real API key |
 | Browser execution: isolated browser worker, Celery orchestrator, events + SSE, artifacts, run view, history | Implemented (M4); verified locally in development mode (real Chromium), Docker path verified by the CI smoke run — see [BROWSER_EXECUTION.md](BROWSER_EXECUTION.md) |
-| Workflow Studio + DAG engine | Design (M5) |
+| Workflow Studio + DAG engine | Implemented (M5); engine verified with real Chromium and fake AI providers, live run of the Run-a-test template on demo.playwright.dev |
 | Execution Center + Browser Preview | Design (M6) |
 | Failure analysis and repair | Design (M7) |
 | Reports, usage dashboard, CI/CD hardening | Design (M8) |
@@ -152,7 +152,7 @@ Tables (milestone of introduction in brackets):
 | AI [M2] | `ai_providers` (a user's provider connection), `ai_credentials` (encrypted secret, key version, rotation), `ai_model_configurations` (discovered or manual model IDs with capabilities), `ai_task_routing` (mode, per-task routes, fallback policy), `ai_requests` (one row per AI call: task, requested/actual model, latency, tokens, request ID, status, retry/fallback history) |
 | Projects [M3] | `projects`, `project_environments`, `environment_variables` (secret values encrypted, write-only) |
 | Tests [M3] | `test_suites`, `test_cases`, `test_plans` (AI/user drafts with requirement analysis), `test_versions` (immutable approved versions: DSL steps + rendered code + parent version) |
-| Workflows [M5] | `workflows`, `workflow_versions` (immutable), `workflow_nodes`, `workflow_edges` |
+| Workflows [M5] | `workflows`, `workflow_versions` (immutable; the graph is one validated JSON document, ADR-019), `workflow_node_executions` |
 | Executions [M4 implemented, M5 adds workflow runs] | `workflow_executions` (pinned to a workflow version + resolved config snapshot), `workflow_node_executions`, `execution_events` (ordered by per-execution `seq`), `test_executions`, `execution_steps`, `execution_artifacts` |
 | Quality [M7/M8] | `failure_analyses`, `repair_proposals`, `reports` |
 

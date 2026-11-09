@@ -6,7 +6,7 @@ Please do not open public issues for security problems. Contact the maintainer p
 with a description, reproduction steps and impact. You will get an acknowledgement and a
 fix timeline.
 
-## What is implemented (Milestones 1–4)
+## What is implemented (Milestones 1–5)
 
 | AI control (M2) | Implementation |
 | --- | --- |
@@ -37,6 +37,16 @@ fix timeline.
 | No generated code execution | The worker interprets the validated step DSL; rendered Playwright code is never executed |
 | Abuse limits | Per-run time limit, active runs per user, browser sessions per worker, idle session reaping; cancellation aborts the in-flight browser action |
 | Live events | SSE requires the bearer token in a header (fetch-based), is ownership-checked, ends after 10 minutes and resumes with `Last-Event-ID` |
+
+| Workflow control (M5) | Implementation |
+| --- | --- |
+| No code in workflows | Nodes are backend classes with schema-validated configs; Condition compares a dotted JSON path with a closed set of operators; nothing is evaluated |
+| One browser boundary | Browser nodes compile to the restricted DSL and run in the same isolated worker with the same network policy and secret handling as tests (ADR-020) |
+| AI output is checked before it acts | AI-generated plans run only through Run Plan, which validates them against the project's allowed domains and test data first |
+| Validation before runs | Unknown/planned node types, invalid configs, incompatible ports, missing inputs, cycles and disallowed domains block runs (422 with structured issues) |
+| Bounded execution | Per-node timeouts, at most 5 attempts with capped backoff, 4 parallel nodes, the workflow time limit and cooperative cancellation |
+| Stored outputs | Node outputs are scrubbed of secret values and size-limited before storage |
+| Ownership | Workflows, versions, runs and node results are owner-scoped (IDOR tests) |
 
 | Control | Implementation |
 | --- | --- |

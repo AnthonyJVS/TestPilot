@@ -16,10 +16,10 @@ from app.core.config import get_settings
 from app.core.crypto import build_cipher
 from app.core.logging import configure_logging
 from app.infrastructure.database.session import create_engine, create_session_factory
+from app.services.ai.registry import ProviderRegistry
 from app.services.execution.browser_client import RedisBrowserClient
 from app.services.execution.events import RedisNotifier
-from app.services.execution.orchestrator import TestRunOrchestrator
-from app.services.execution.runtime import EXECUTE_RUN_TASK
+from app.services.execution.runtime import EXECUTE_RUN_TASK, ExecutionDispatcher
 
 settings = get_settings()
 configure_logging(settings.log_level, settings.log_format)
@@ -39,14 +39,15 @@ async def _execute(execution_id: uuid.UUID) -> None:
     engine = create_engine(settings.database_url)
     redis = Redis.from_url(settings.redis_url or "", decode_responses=True)
     try:
-        orchestrator = TestRunOrchestrator(
+        dispatcher = ExecutionDispatcher(
             create_session_factory(engine),
             settings,
             build_cipher(settings),
             RedisBrowserClient(redis),
             RedisNotifier(redis),
+            ProviderRegistry(),
         )
-        await orchestrator.execute(execution_id)
+        await dispatcher.execute(execution_id)
     finally:
         await redis.aclose()
         await engine.dispose()

@@ -1,8 +1,8 @@
 # Workflow Engine
 
-> Status: **Design** — delivered in Milestone 5 (engine and Workflow Studio),
-> reusing the browser worker from Milestone 4 and the AI router from
-> Milestone 2.
+> Status: **Implemented in Milestone 5** (engine, node registry, validation, Workflow
+> Studio), reusing the browser worker from Milestone 4 and the AI router from Milestone 2.
+> Deviations from the original design are marked *(v1)* below and in §7.
 
 ## 1. Model
 
@@ -155,3 +155,17 @@ Execution states: `queued`, `running`, `awaiting_approval`, `cancelling`,
 
 Every transition emits an event (see [EXECUTION_CENTER.md](EXECUTION_CENTER.md))
 persisted before it is published, so a historical run can be fully replayed.
+
+## 7. What v1 implements (Milestone 5)
+
+| Area | Implemented | Not yet |
+| --- | --- | --- |
+| Storage | `workflows`, immutable `workflow_versions` with the graph as one JSON document (ADR-019), `workflow_node_executions`; executions pin the version | — |
+| Node types | Data: Input, Output · Browser: Launch Browser, Navigate, Click, Fill Input, Select Option, Press Key, Wait, Screenshot, Assert, Inspect Console, Inspect Network · Tests: Run Test (current approved version), Run Plan (validated against the project first) · AI: Requirement Analyzer, Test Planner · Logic: Condition, Merge, Delay | Code Generator, Failure Analyzer, Visual Analyzer, Repair Proposal, Report Generator (M7/M8), Switch, Approval Gate, Transform Data, Validate Schema, Store Artifact (shown as planned) |
+| Browser nodes | Compile to one step of the test-plan DSL (same validation, secret rules and isolated worker as approved tests) | — |
+| Validation | Rules 1–7 of §3; structured issues highlighted on the canvas; live while editing | — |
+| Semantics | Readiness, skip propagation, deterministic ordering, `MAX_PARALLEL = 4`, per-session lock, retries with fixed/exponential backoff, per-attempt timeout, workflow time limit, `error` handles, cooperative cancellation | Merge mode `first`; `awaiting_approval`; heartbeats (stale runs are reported as interrupted after their time limit) |
+| Condition | A closed set of operators over a dotted path into the input JSON (`equals`, `not_equals`, `contains`, `greater_than`, `less_than`, `exists`, `is_empty`); nothing is evaluated as code | Expression language |
+| Events | `node.started/completed/failed/skipped/cancelled/retry_scheduled`, `ai.request.completed` (provider and actual model), browser events with `node_id` | `node.queued` |
+| Studio | Palette from `GET /workflow-node-types`, drag and drop or click to add, typed connections (incompatible ones are refused), inspector generated from the config JSON Schema, retry/timeout editor, save version, duplicate, templates (Run a test, Generate and run with AI), run | Undo/redo, copy/paste of nodes |
+

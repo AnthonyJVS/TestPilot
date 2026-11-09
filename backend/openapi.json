@@ -396,6 +396,17 @@
             "title": "Name",
             "type": "string"
           },
+          "node_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Node Id"
+          },
           "size_bytes": {
             "title": "Size Bytes",
             "type": "integer"
@@ -419,6 +430,7 @@
           "content_type",
           "size_bytes",
           "step_index",
+          "node_id",
           "created_at"
         ],
         "title": "ArtifactOut",
@@ -1303,7 +1315,10 @@
             "type": "boolean"
           },
           "kind": {
-            "const": "test_run",
+            "enum": [
+              "test_run",
+              "workflow"
+            ],
             "title": "Kind",
             "type": "string"
           },
@@ -1344,11 +1359,28 @@
             "type": "string"
           },
           "test": {
-            "$ref": "#/components/schemas/TestExecutionOut"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TestExecutionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "trigger": {
             "title": "Trigger",
             "type": "string"
+          },
+          "workflow": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowRunOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -1368,6 +1400,7 @@
           "notes",
           "capture",
           "test",
+          "workflow",
           "artifacts"
         ],
         "title": "ExecutionOut",
@@ -1620,7 +1653,10 @@
             "type": "string"
           },
           "kind": {
-            "const": "test_run",
+            "enum": [
+              "test_run",
+              "workflow"
+            ],
             "title": "Kind",
             "type": "string"
           },
@@ -1680,12 +1716,25 @@
           "version_number": {
             "title": "Version Number",
             "type": "integer"
+          },
+          "workflow_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow Id"
           }
         },
         "required": [
           "id",
           "project_id",
           "kind",
+          "workflow_id",
           "status",
           "test_case_id",
           "test_name",
@@ -1701,6 +1750,169 @@
           "duration_ms"
         ],
         "title": "ExecutionSummaryOut",
+        "type": "object"
+      },
+      "GraphEdge": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "pattern": "^[A-Za-z0-9_-]{1,40}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "source": {
+            "pattern": "^[A-Za-z0-9_-]{1,40}$",
+            "title": "Source",
+            "type": "string"
+          },
+          "source_handle": {
+            "pattern": "^[a-z][a-z0-9_]{0,30}$",
+            "title": "Source Handle",
+            "type": "string"
+          },
+          "target": {
+            "pattern": "^[A-Za-z0-9_-]{1,40}$",
+            "title": "Target",
+            "type": "string"
+          },
+          "target_handle": {
+            "pattern": "^[a-z][a-z0-9_]{0,30}$",
+            "title": "Target Handle",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "source_handle",
+          "target",
+          "target_handle"
+        ],
+        "title": "GraphEdge",
+        "type": "object"
+      },
+      "GraphIn": {
+        "properties": {
+          "graph": {
+            "$ref": "#/components/schemas/WorkflowGraph"
+          }
+        },
+        "required": [
+          "graph"
+        ],
+        "title": "GraphIn",
+        "type": "object"
+      },
+      "GraphIssue": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "edge_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edge Id"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "node_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Node Id"
+          },
+          "severity": {
+            "enum": [
+              "error",
+              "warning"
+            ],
+            "title": "Severity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "severity",
+          "code",
+          "message"
+        ],
+        "title": "GraphIssue",
+        "type": "object"
+      },
+      "GraphNode": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "additionalProperties": true,
+            "title": "Config",
+            "type": "object"
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_-]{1,40}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "default": "",
+            "maxLength": 80,
+            "title": "Label",
+            "type": "string"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Position",
+            "default": {
+              "x": 0.0,
+              "y": 0.0
+            }
+          },
+          "retry": {
+            "$ref": "#/components/schemas/RetryPolicy",
+            "default": {
+              "backoff": "exponential",
+              "base_seconds": 1.0,
+              "max_attempts": 1,
+              "max_seconds": 30.0,
+              "retry_on": "transient"
+            }
+          },
+          "timeout_seconds": {
+            "anyOf": [
+              {
+                "maximum": 900.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timeout Seconds"
+          },
+          "type": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type"
+        ],
+        "title": "GraphNode",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -1952,6 +2164,224 @@
         "title": "ModelOut",
         "type": "object"
       },
+      "NodeExecutionOut": {
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "node_id": {
+            "title": "Node Id",
+            "type": "string"
+          },
+          "node_type": {
+            "title": "Node Type",
+            "type": "string"
+          },
+          "output": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "enum": [
+              "waiting",
+              "running",
+              "completed",
+              "failed",
+              "skipped",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          }
+        },
+        "required": [
+          "node_id",
+          "node_type",
+          "label",
+          "status",
+          "attempts",
+          "started_at",
+          "finished_at",
+          "duration_ms",
+          "summary",
+          "output",
+          "error_code",
+          "error_message"
+        ],
+        "title": "NodeExecutionOut",
+        "type": "object"
+      },
+      "NodeTypeOut": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "category": {
+            "enum": [
+              "data",
+              "browser",
+              "test",
+              "ai",
+              "logic"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "config_schema": {
+            "additionalProperties": true,
+            "title": "Config Schema",
+            "type": "object"
+          },
+          "defaults": {
+            "additionalProperties": true,
+            "title": "Defaults",
+            "type": "object"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "entry": {
+            "title": "Entry",
+            "type": "boolean"
+          },
+          "inputs": {
+            "items": {
+              "$ref": "#/components/schemas/PortOut"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "milestone": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Milestone"
+          },
+          "outputs": {
+            "items": {
+              "$ref": "#/components/schemas/PortOut"
+            },
+            "title": "Outputs",
+            "type": "array"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "category",
+          "label",
+          "description",
+          "available",
+          "milestone",
+          "entry",
+          "inputs",
+          "outputs",
+          "config_schema",
+          "defaults"
+        ],
+        "title": "NodeTypeOut",
+        "type": "object"
+      },
       "PlanGenerate": {
         "properties": {
           "environment_id": {
@@ -2117,6 +2547,56 @@
           "plan"
         ],
         "title": "PlanSave",
+        "type": "object"
+      },
+      "PortOut": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "multi": {
+            "title": "Multi",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "required": {
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "label",
+          "required",
+          "multi"
+        ],
+        "title": "PortOut",
+        "type": "object"
+      },
+      "Position": {
+        "additionalProperties": false,
+        "properties": {
+          "x": {
+            "default": 0,
+            "title": "X",
+            "type": "number"
+          },
+          "y": {
+            "default": 0,
+            "title": "Y",
+            "type": "number"
+          }
+        },
+        "title": "Position",
         "type": "object"
       },
       "ProjectCreate": {
@@ -2702,6 +3182,52 @@
           "ambiguities"
         ],
         "title": "RequirementAnalysis",
+        "type": "object"
+      },
+      "RetryPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "backoff": {
+            "default": "exponential",
+            "enum": [
+              "fixed",
+              "exponential"
+            ],
+            "title": "Backoff",
+            "type": "string"
+          },
+          "base_seconds": {
+            "default": 1.0,
+            "maximum": 60.0,
+            "minimum": 0.0,
+            "title": "Base Seconds",
+            "type": "number"
+          },
+          "max_attempts": {
+            "default": 1,
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Max Attempts",
+            "type": "integer"
+          },
+          "max_seconds": {
+            "default": 30.0,
+            "maximum": 300.0,
+            "minimum": 0.0,
+            "title": "Max Seconds",
+            "type": "number"
+          },
+          "retry_on": {
+            "default": "transient",
+            "enum": [
+              "transient",
+              "any"
+            ],
+            "title": "Retry On",
+            "type": "string"
+          }
+        },
+        "title": "RetryPolicy",
         "type": "object"
       },
       "RouteModelOut": {
@@ -3720,6 +4246,27 @@
         "title": "ValidationError",
         "type": "object"
       },
+      "ValidationOut": {
+        "properties": {
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/GraphIssue"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "runnable": {
+            "title": "Runnable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "issues",
+          "runnable"
+        ],
+        "title": "ValidationOut",
+        "type": "object"
+      },
       "VariableOut": {
         "properties": {
           "has_value": {
@@ -3837,6 +4384,31 @@
         "title": "VersionOut",
         "type": "object"
       },
+      "VersionSummary": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "created_at"
+        ],
+        "title": "VersionSummary",
+        "type": "object"
+      },
       "VersionSummaryOut": {
         "properties": {
           "created_at": {
@@ -3860,6 +4432,339 @@
           "created_at"
         ],
         "title": "VersionSummaryOut",
+        "type": "object"
+      },
+      "WorkflowCreate": {
+        "properties": {
+          "description": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "template": {
+            "default": "blank",
+            "enum": [
+              "blank",
+              "run_test",
+              "generate_and_run"
+            ],
+            "title": "Template",
+            "type": "string"
+          },
+          "test_case_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Used by the run_test template.",
+            "title": "Test Case Id"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "WorkflowCreate",
+        "type": "object"
+      },
+      "WorkflowGraph": {
+        "additionalProperties": false,
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/GraphEdge"
+            },
+            "maxItems": 300,
+            "title": "Edges",
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/GraphNode"
+            },
+            "maxItems": 100,
+            "title": "Nodes",
+            "type": "array"
+          }
+        },
+        "title": "WorkflowGraph",
+        "type": "object"
+      },
+      "WorkflowOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "latest": {
+            "$ref": "#/components/schemas/WorkflowVersionOut"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/VersionSummary"
+            },
+            "title": "Versions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "name",
+          "description",
+          "latest",
+          "versions",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "WorkflowOut",
+        "type": "object"
+      },
+      "WorkflowRunCreate": {
+        "properties": {
+          "version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Defaults to the latest version.",
+            "title": "Version"
+          }
+        },
+        "title": "WorkflowRunCreate",
+        "type": "object"
+      },
+      "WorkflowRunOut": {
+        "properties": {
+          "graph": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowGraph"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/NodeExecutionOut"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "workflow_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow Id"
+          },
+          "workflow_name": {
+            "title": "Workflow Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workflow_id",
+          "workflow_name",
+          "version",
+          "graph",
+          "nodes"
+        ],
+        "title": "WorkflowRunOut",
+        "type": "object"
+      },
+      "WorkflowSummaryOut": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_run_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run At"
+          },
+          "last_run_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run Status"
+          },
+          "latest_version": {
+            "title": "Latest Version",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nodes": {
+            "title": "Nodes",
+            "type": "integer"
+          },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "project_name": {
+            "title": "Project Name",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "project_id",
+          "project_name",
+          "name",
+          "description",
+          "latest_version",
+          "nodes",
+          "updated_at",
+          "last_run_status",
+          "last_run_at"
+        ],
+        "title": "WorkflowSummaryOut",
+        "type": "object"
+      },
+      "WorkflowUpdate": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "title": "WorkflowUpdate",
+        "type": "object"
+      },
+      "WorkflowVersionOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "graph": {
+            "$ref": "#/components/schemas/WorkflowGraph"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/GraphIssue"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "graph",
+          "issues",
+          "created_at"
+        ],
+        "title": "WorkflowVersionOut",
         "type": "object"
       }
     },
@@ -5455,6 +6360,23 @@
           },
           {
             "in": "query",
+            "name": "workflow_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workflow Id"
+            }
+          },
+          {
+            "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
@@ -6427,6 +7349,64 @@
         ]
       }
     },
+    "/api/v1/projects/{project_id}/workflows": {
+      "post": {
+        "operationId": "create_workflow_api_v1_projects__project_id__workflows_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Workflow",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
     "/api/v1/suites/{suite_id}": {
       "delete": {
         "operationId": "delete_suite_api_v1_suites__suite_id__delete",
@@ -6653,6 +7633,460 @@
         "summary": "Run Version",
         "tags": [
           "executions"
+        ]
+      }
+    },
+    "/api/v1/workflow-node-types": {
+      "get": {
+        "operationId": "list_node_types_api_v1_workflow_node_types_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NodeTypeOut"
+                  },
+                  "title": "Response List Node Types Api V1 Workflow Node Types Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Node Types",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows": {
+      "get": {
+        "operationId": "list_workflows_api_v1_workflows_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WorkflowSummaryOut"
+                  },
+                  "title": "Response List Workflows Api V1 Workflows Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Workflows",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/{workflow_id}": {
+      "delete": {
+        "operationId": "delete_workflow_api_v1_workflows__workflow_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Workflow",
+        "tags": [
+          "workflows"
+        ]
+      },
+      "get": {
+        "operationId": "get_workflow_api_v1_workflows__workflow_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Workflow",
+        "tags": [
+          "workflows"
+        ]
+      },
+      "patch": {
+        "operationId": "update_workflow_api_v1_workflows__workflow_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Workflow",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/{workflow_id}/duplicate": {
+      "post": {
+        "operationId": "duplicate_workflow_api_v1_workflows__workflow_id__duplicate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Duplicate Workflow",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/{workflow_id}/run": {
+      "post": {
+        "operationId": "run_workflow_api_v1_workflows__workflow_id__run_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowRunCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Run Workflow",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/{workflow_id}/validate": {
+      "post": {
+        "operationId": "validate_workflow_api_v1_workflows__workflow_id__validate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GraphIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Validate Workflow",
+        "tags": [
+          "workflows"
+        ]
+      }
+    },
+    "/api/v1/workflows/{workflow_id}/versions": {
+      "post": {
+        "operationId": "save_version_api_v1_workflows__workflow_id__versions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflow_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workflow Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GraphIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Save Version",
+        "tags": [
+          "workflows"
         ]
       }
     },

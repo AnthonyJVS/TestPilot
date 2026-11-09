@@ -14,6 +14,7 @@ from sqlalchemy import BigInteger, ForeignKey, Index, Integer, String, Text, Uni
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database.base import Base, JSONType, UUIDPrimaryKeyMixin, utcnow
+from app.infrastructure.database.models.workflow import NodeExecution
 
 TERMINAL_STATUSES = frozenset({"passed", "failed", "error", "cancelled"})
 
@@ -32,6 +33,12 @@ class WorkflowExecution(UUIDPrimaryKeyMixin, Base):
         ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
     )
     kind: Mapped[str] = mapped_column(String(20), nullable=False)  # test_run (M4) | workflow (M5)
+    workflow_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("workflows.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    workflow_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("workflow_versions.id", ondelete="SET NULL"), nullable=True
+    )
     status: Mapped[str] = mapped_column(String(20), nullable=False)
     trigger: Mapped[str] = mapped_column(String(20), default="manual", nullable=False)
     # Resolved configuration the run uses (never secret values). Execution never re-reads
@@ -47,6 +54,9 @@ class WorkflowExecution(UUIDPrimaryKeyMixin, Base):
 
     test_executions: Mapped[list[TestExecution]] = relationship(
         back_populates="execution", cascade="all, delete-orphan", passive_deletes=True
+    )
+    node_executions: Mapped[list[NodeExecution]] = relationship(
+        cascade="all, delete-orphan", passive_deletes=True, order_by="NodeExecution.started_at"
     )
     artifacts: Mapped[list[ExecutionArtifact]] = relationship(
         back_populates="execution",
@@ -152,6 +162,7 @@ class ExecutionArtifact(UUIDPrimaryKeyMixin, Base):
         ForeignKey("test_executions.id", ondelete="CASCADE"), nullable=True
     )
     step_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    node_id: Mapped[str | None] = mapped_column(String(60), nullable=True)
     kind: Mapped[str] = mapped_column(String(20), nullable=False)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     content_type: Mapped[str] = mapped_column(String(100), nullable=False)

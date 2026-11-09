@@ -17,13 +17,14 @@ from pathlib import Path
 from typing import Protocol
 
 from redis.asyncio import Redis
-from sqlalchemy import update
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import Settings
 from app.core.crypto import SecretCipher
 from app.infrastructure.database.base import utcnow
-from app.infrastructure.database.models import TestExecution, WorkflowExecution
+from app.infrastructure.database.models import NodeExecution, TestExecution, WorkflowExecution
+from app.services.ai.registry import ProviderRegistry
 from app.services.execution.browser_client import (
     BrowserClient,
     RedisBrowserClient,
@@ -87,6 +88,38 @@ class CeleryJobQueue:
         await asyncio.to_thread(self._celery.close)
 
 
+class ExecutionDispatcher:
+    """Routes an execution to the orchestrator for its kind (test run or workflow)."""
+
+    def __init__(
+        self,
+        session_factory: async_sessionmaker[AsyncSession],
+        settings: Settings,
+        cipher: SecretCipher,
+        browser: BrowserClient,
+        notifier: EventNotifier,
+        providers: ProviderRegistry,
+    ) -> None:
+        from app.services.workflows.catalog import node_registry
+        from app.services.workflows.engine import WorkflowOrchestrator
+
+        self._sf = session_factory
+        self.test_runs = TestRunOrchestrator(session_factory, settings, cipher, browser, notifier)
+        self.workflows = WorkflowOrchestrator(
+            session_factory, settings, cipher, browser, notifier, providers, node_registry()
+        )
+
+    async def execute(self, execution_id: uuid.UUID) -> None:
+        async with self._sf() as db:
+            kind = await db.scalar(
+                select(WorkflowExecution.kind).where(WorkflowExecution.id == execution_id)
+            )
+        if kind == "workflow":
+            await self.workflows.execute(execution_id)
+        elif kind is not None:
+            await self.test_runs.execute(execution_id)
+
+
 @dataclass
 class ExecutionRuntime:
     settings: Settings
@@ -118,6 +151,7 @@ def build_runtime(
     session_factory: async_sessionmaker[AsyncSession],
     cipher: SecretCipher,
     redis: Redis | None,
+    providers: ProviderRegistry,
 ) -> ExecutionRuntime:
     browser = build_browser_client(settings, redis)
     notifier: EventNotifier = RedisNotifier(redis) if redis is not None else InMemoryNotifier()
@@ -126,8 +160,10 @@ def build_runtime(
         assert settings.redis_url is not None
         jobs = CeleryJobQueue(settings.redis_url)
     else:
-        orchestrator = TestRunOrchestrator(session_factory, settings, cipher, browser, notifier)
-        jobs = InlineJobQueue(orchestrator.execute, settings.max_concurrent_runs)
+        dispatcher = ExecutionDispatcher(
+            session_factory, settings, cipher, browser, notifier, providers
+        )
+        jobs = InlineJobQueue(dispatcher.execute, settings.max_concurrent_runs)
         logger.warning(
             "EXECUTION_MODE=inline: test runs execute inside the API process%s. Development only.",
             "" if settings.browser_transport == "redis" else " with an unisolated browser",
@@ -158,6 +194,14 @@ async def interrupt_orphaned_runs(session_factory: async_sessionmaker[AsyncSessi
                 update(TestExecution)
                 .where(TestExecution.execution_id.in_(ids))
                 .values(status="error", finished_at=now)
+            )
+            await db.execute(
+                update(NodeExecution)
+                .where(
+                    NodeExecution.execution_id.in_(ids),
+                    NodeExecution.status.in_(("waiting", "running")),
+                )
+                .values(status="cancelled")
             )
         await db.commit()
         return len(ids)

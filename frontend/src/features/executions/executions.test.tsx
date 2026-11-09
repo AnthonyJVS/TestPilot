@@ -59,9 +59,10 @@ const execution: Execution = {
       { index: 2, action: "click", description: "Open the profile", status: "skipped", started_at: null, finished_at: null, duration_ms: null, url: null, error_code: null, error_message: null },
     ],
   },
+  workflow: null,
   artifacts: [
-    { id: "a1", kind: "screenshot", name: "step-000.jpg", content_type: "image/jpeg", size_bytes: 2048, step_index: 0, created_at: "2026-11-09T10:00:02Z" },
-    { id: "a2", kind: "trace", name: "trace.zip", content_type: "application/zip", size_bytes: 330_000, step_index: null, created_at: "2026-11-09T10:00:04Z" },
+    { id: "a1", kind: "screenshot", name: "step-000.jpg", content_type: "image/jpeg", size_bytes: 2048, step_index: 0, node_id: null, created_at: "2026-11-09T10:00:02Z" },
+    { id: "a2", kind: "trace", name: "trace.zip", content_type: "application/zip", size_bytes: 330_000, step_index: null, node_id: null, created_at: "2026-11-09T10:00:04Z" },
   ],
 };
 

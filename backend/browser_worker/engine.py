@@ -255,7 +255,9 @@ class BrowserEngine:
             "service_workers": "block",  # keep every request visible to the network policy
         }
         if capture.video:
-            context_options["record_video_dir"] = str(directory / "video-tmp")
+            context_options["record_video_dir"] = str(
+                directory / f"{params.label or 'session'}-video-tmp"
+            )
             context_options["record_video_size"] = context_options["viewport"]
         context = await browser.new_context(**context_options)
         context.set_default_timeout(params.default_timeout_ms)
@@ -299,10 +301,11 @@ class BrowserEngine:
             raise WorkerError("session.not_found", "The browser session no longer exists.")
         session.closed = True
         root, directory, capture = self.artifacts_root, session.directory, session.params.capture
+        prefix = f"{session.params.label}-" if session.params.label else ""
         artifacts: list[ArtifactInfo] = []
         try:
             if capture.trace:
-                trace = directory / "trace.zip"
+                trace = directory / f"{prefix}trace.zip"
                 await session.context.tracing.stop(path=trace)
                 artifacts.append(_artifact(root, trace, "trace", "application/zip"))
         except PlaywrightError:
@@ -314,19 +317,21 @@ class BrowserEngine:
             pass
         if video is not None:
             try:
-                target = directory / "video.webm"
+                target = directory / f"{prefix}video.webm"
                 await video.save_as(target)
                 artifacts.append(_artifact(root, target, "video", "video/webm"))
             except PlaywrightError:
                 logger.warning("Could not save video", exc_info=True)
-            shutil.rmtree(directory / "video-tmp", ignore_errors=True)
-        network = directory / "network.json"
+            shutil.rmtree(
+                directory / f"{session.params.label or 'session'}-video-tmp", ignore_errors=True
+            )
+        network = directory / f"{prefix}network.json"
         network.write_text(
             json.dumps([e.model_dump() for e in session.network_log], indent=1), encoding="utf-8"
         )
         artifacts.append(_artifact(root, network, "network_log", "application/json"))
         if session.console_log:
-            console = directory / "console.json"
+            console = directory / f"{prefix}console.json"
             console.write_text(
                 json.dumps([e.model_dump() for e in session.console_log], indent=1),
                 encoding="utf-8",

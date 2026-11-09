@@ -63,7 +63,7 @@ def create_app(
             interrupted = await interrupt_orphaned_runs(session_factory)
             if interrupted:
                 logger.warning("Marked %d unfinished runs as interrupted", interrupted)
-        app.state.execution = build_runtime(settings, session_factory, cipher, redis)
+        app.state.execution = build_runtime(settings, session_factory, cipher, redis, registry)
         logger.info(
             "TestPilot API started",
             extra={"environment": settings.app_env, "database": engine.dialect.name},
