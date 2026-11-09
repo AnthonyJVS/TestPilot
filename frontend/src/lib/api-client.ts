@@ -121,3 +121,31 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
 }
+
+/**
+ * Authorised GET returning the raw Response (binary artifacts, event streams).
+ * Same bearer + single silent refresh as apiRequest; failures become ApiError.
+ */
+export async function fetchWithAuth(
+  path: string,
+  init: { signal?: AbortSignal; headers?: Record<string, string> } = {},
+): Promise<Response> {
+  const send = async (): Promise<Response> => {
+    const headers: Record<string, string> = { ...init.headers };
+    const token = useAuthStore.getState().accessToken;
+    if (token) headers.Authorization = `Bearer ${token}`;
+    try {
+      return await fetch(`${API_BASE}${path}`, { headers, credentials: "same-origin", signal: init.signal });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") throw error;
+      throw networkError();
+    }
+  };
+  let response = await send();
+  if (response.status === 401) {
+    const refreshed = await refreshSession();
+    if (refreshed) response = await send();
+  }
+  if (!response.ok) throw await toApiError(response);
+  return response;
+}

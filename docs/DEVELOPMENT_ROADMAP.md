@@ -14,7 +14,7 @@ known limitations, security considerations, next milestone.
 | 1 | Foundation | Implemented; Docker acceptance pending a Docker host / CI run |
 | 2 | Multi-LLM foundation (Gemini-first Simple Mode) | Implemented; acceptance run with a real Gemini key pending |
 | 3 | Testing Workspace and test generation | Implemented; live AI generation pending a real API key |
-| 4 | Browser execution worker + event pipeline | Planned |
+| 4 | Browser execution worker + event pipeline | Implemented; verified with real Chromium locally (development mode), Docker path checked by the CI smoke run |
 | 5 | Workflow Studio + DAG engine | Planned |
 | 6 | Execution Center + Browser Preview | Planned |
 | 7 | Failure analysis and controlled repair | Planned |

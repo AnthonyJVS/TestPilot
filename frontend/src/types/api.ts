@@ -47,6 +47,16 @@ export type PlanStep = Schemas["Step"];
 export type PlanLocator = Schemas["Locator"];
 export type TestVersion = Schemas["VersionOut"];
 
+export type RunCreate = Schemas["RunCreate"];
+export type Execution = Schemas["ExecutionOut"];
+export type ExecutionSummary = Schemas["ExecutionSummaryOut"];
+export type ExecutionStatus = Schemas["ExecutionOut"]["status"];
+export type ExecutionStep = Schemas["ExecutionStepOut"];
+export type ExecutionEvent = Schemas["ExecutionEventOut"];
+export type Artifact = Schemas["ArtifactOut"];
+export type ExecutionRuntime = Schemas["ExecutionRuntimeOut"];
+export type BrowserName = Schemas["RunCreate"]["browser"];
+
 /** The error envelope every backend failure uses. */
 export interface ApiErrorBody {
   error: {

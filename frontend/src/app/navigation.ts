@@ -54,15 +54,8 @@ export const NAV_ITEMS: NavItem[] = [
     path: "/executions",
     label: "Executions",
     icon: MonitorPlay,
-    status: "planned",
-    milestone: 4,
+    status: "available",
     summary: "Watch runs live and inspect every step afterwards.",
-    plannedCapabilities: [
-      "Live node states on the workflow canvas",
-      "Timeline of AI, browser and system events with filters",
-      "Inspector showing redacted AI requests and responses",
-      "Browser preview built from real screenshots of the run",
-    ],
   },
   {
     path: "/ai-providers",

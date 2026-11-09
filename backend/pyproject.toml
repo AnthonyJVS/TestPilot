@@ -23,10 +23,15 @@ dependencies = [
     "anthropic==2.6.0",
     "openai==3.46.0",
     "httpx2==2.16.0",
+    "celery==5.7.0",
 ]
 
 [project.optional-dependencies]
+# Where browsers run: the browser-worker image and local development (ThreadedBrowserClient).
+browser = ["playwright==1.62.0"]
 dev = [
+    "playwright==1.62.0",
+    "fakeredis==2.40.0",
     "pytest==9.2.0",
     "pytest-asyncio==1.4.1.post1",
     "httpx==0.28.1",
@@ -39,7 +44,7 @@ requires = ["setuptools>=75"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["app*"]
+include = ["app*", "browser_worker*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -57,7 +62,7 @@ select = ["E", "F", "W", "I", "B", "UP", "S", "ASYNC", "RUF"]
 ignore = ["S101"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["app", "tests"]
+known-first-party = ["app", "browser_worker", "tests"]
 known-third-party = ["alembic"]
 
 [tool.ruff.lint.per-file-ignores]
@@ -72,3 +77,7 @@ python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
 exclude = ["alembic/"]
+
+[[tool.mypy.overrides]]
+module = ["celery", "celery.*"]
+ignore_missing_imports = true

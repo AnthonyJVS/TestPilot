@@ -33,9 +33,11 @@ jobs:
           cache: pip
           cache-dependency-path: backend/pyproject.toml
       - run: pip install -e ".[dev]"
+      # Real-browser integration tests (tests/integration/test_execution_api.py) need Chromium.
+      - run: python -m playwright install --with-deps chromium
       - run: ruff check .
       - run: ruff format --check .
-      - run: mypy app
+      - run: mypy app browser_worker
       - name: Tests (PostgreSQL)
         run: pytest -q
         env:
@@ -99,6 +101,8 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"email":"ci@example.com","display_name":"CI","password":"ci-check-password-123"}' \
             | grep -q access_token
+      - name: Real test run through the isolated browser worker
+        run: python3 backend/scripts/smoke_run.py http://localhost:8080
       - name: Logs on failure
         if: failure()
         run: docker compose logs --no-color

@@ -68,6 +68,19 @@ class Settings(BaseSettings):
     ai_max_attempts: int = Field(default=3, ge=1, le=5)
     ai_max_retry_wait_seconds: float = Field(default=20.0, ge=0, le=120)
 
+    # Test execution (M4). "inline" runs jobs inside the API process and "thread" hosts the
+    # browser engine on a thread of that process: development only. Production requires the
+    # Celery worker ("celery") and the isolated browser-worker container ("redis").
+    execution_mode: Literal["inline", "celery"] = "inline"
+    browser_transport: Literal["thread", "redis"] = "thread"
+    artifacts_dir: str = "./data/artifacts"
+    # Allow tests against localhost/private networks (link-local metadata is always blocked).
+    browser_allow_private_network: bool = False
+    browser_max_sessions: int = Field(default=2, ge=1, le=16)
+    max_concurrent_runs: int = Field(default=2, ge=1, le=16)
+    max_active_runs_per_user: int = Field(default=5, ge=1, le=100)
+    run_max_seconds: int = Field(default=600, ge=30, le=3600)
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:
@@ -90,6 +103,11 @@ class Settings(BaseSettings):
                 raise ValueError("SQLite is not supported in production; use PostgreSQL.")
             if not self.encryption_keys:
                 raise ValueError("ENCRYPTION_KEYS is required in production (AI credentials).")
+            if self.execution_mode != "celery" or self.browser_transport != "redis":
+                raise ValueError(
+                    "Production requires EXECUTION_MODE=celery and BROWSER_TRANSPORT=redis "
+                    "(browsers must run in the isolated browser-worker container)."
+                )
             if not self.cookie_secure:
                 logger.warning(
                     "COOKIE_SECURE is false: refresh cookies will be sent over plain HTTP. "
@@ -101,6 +119,13 @@ class Settings(BaseSettings):
             logger.warning("JWT_SECRET is not set; using an ephemeral development secret.")
         elif len(secret) < MIN_JWT_SECRET_LENGTH:
             raise ValueError(f"JWT_SECRET must be at least {MIN_JWT_SECRET_LENGTH} characters.")
+        return self
+
+    @model_validator(mode="after")
+    def _validate_execution(self) -> Settings:
+        needs_redis = self.execution_mode == "celery" or self.browser_transport == "redis"
+        if needs_redis and not self.redis_url:
+            raise ValueError("EXECUTION_MODE=celery and BROWSER_TRANSPORT=redis need REDIS_URL.")
         return self
 
     @property

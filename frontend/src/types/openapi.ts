@@ -182,6 +182,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/artifacts/{artifact_id}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Artifact Content */
+        get: operations["artifact_content_api_v1_artifacts__artifact_id__content_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit-logs": {
         parameters: {
             query?: never;
@@ -379,6 +396,111 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/execution-runtime": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Execution Runtime */
+        get: operations["execution_runtime_api_v1_execution_runtime_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/executions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Executions */
+        get: operations["list_executions_api_v1_executions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/executions/{execution_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Execution */
+        get: operations["get_execution_api_v1_executions__execution_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/executions/{execution_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Execution */
+        post: operations["cancel_execution_api_v1_executions__execution_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/executions/{execution_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Events */
+        get: operations["list_events_api_v1_executions__execution_id__events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/executions/{execution_id}/events/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stream Events
+         * @description Server-Sent Events: replays persisted events after ``Last-Event-ID``, then tails live.
+         */
+        get: operations["stream_events_api_v1_executions__execution_id__events_stream_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/plans/{plan_id}": {
         parameters: {
             query?: never;
@@ -555,6 +677,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/versions/{version_id}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run Version */
+        post: operations["run_version_api_v1_versions__version_id__run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health/live": {
         parameters: {
             query?: never;
@@ -688,6 +827,32 @@ export interface components {
             task: string | null;
             /** Total Tokens */
             total_tokens: number | null;
+        };
+        /** ArtifactOut */
+        ArtifactOut: {
+            /** Content Type */
+            content_type: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "screenshot" | "trace" | "video" | "network_log" | "console_log";
+            /** Name */
+            name: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /** Step Index */
+            step_index: number | null;
         };
         /** AuditLogOut */
         AuditLogOut: {
@@ -942,6 +1107,199 @@ export interface components {
             is_default?: boolean | null;
             /** Name */
             name?: string | null;
+        };
+        /** ExecutionEventOut */
+        ExecutionEventOut: {
+            /** Category */
+            category: string;
+            /** Data */
+            data: {
+                [key: string]: unknown;
+            };
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "info" | "warning" | "error";
+            /** Message */
+            message: string;
+            /** Node Id */
+            node_id: string | null;
+            /** Seq */
+            seq: number;
+            /** Step Index */
+            step_index: number | null;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+            /** Type */
+            type: string;
+        };
+        /** ExecutionOut */
+        ExecutionOut: {
+            /** Artifacts */
+            artifacts: components["schemas"]["ArtifactOut"][];
+            /** Cancel Requested */
+            cancel_requested: boolean;
+            /** Capture */
+            capture: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Duration Ms */
+            duration_ms: number | null;
+            /** Error Code */
+            error_code: string | null;
+            /** Error Message */
+            error_message: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Isolated
+             * @description True when the browser ran in the isolated worker.
+             */
+            isolated: boolean;
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "test_run";
+            /** Notes */
+            notes: string[];
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Started At */
+            started_at: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "running" | "passed" | "failed" | "error" | "cancelled";
+            test: components["schemas"]["TestExecutionOut"];
+            /** Trigger */
+            trigger: string;
+        };
+        /** ExecutionRuntimeOut */
+        ExecutionRuntimeOut: {
+            /** Allow Private Network */
+            allow_private_network: boolean;
+            /** Available */
+            available: boolean;
+            /** Browsers */
+            browsers: {
+                [key: string]: boolean;
+            };
+            /** Detail */
+            detail: string | null;
+            /** Isolated */
+            isolated: boolean;
+            /** Max Run Seconds */
+            max_run_seconds: number;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "inline" | "celery";
+            /** Playwright Version */
+            playwright_version: string | null;
+            /**
+             * Transport
+             * @enum {string}
+             */
+            transport: "thread" | "redis";
+        };
+        /** ExecutionStepOut */
+        ExecutionStepOut: {
+            /** Action */
+            action: string;
+            /** Description */
+            description: string;
+            /** Duration Ms */
+            duration_ms: number | null;
+            /** Error Code */
+            error_code: string | null;
+            /** Error Message */
+            error_message: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Index */
+            index: number;
+            /** Started At */
+            started_at: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "running" | "passed" | "failed" | "skipped";
+            /** Url */
+            url: string | null;
+        };
+        /** ExecutionSummaryOut */
+        ExecutionSummaryOut: {
+            /**
+             * Browser
+             * @enum {string}
+             */
+            browser: "chromium" | "firefox" | "webkit";
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Duration Ms */
+            duration_ms: number | null;
+            /** Environment Name */
+            environment_name: string;
+            /** Error Message */
+            error_message: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "test_run";
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Started At */
+            started_at: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "running" | "passed" | "failed" | "error" | "cancelled";
+            /** Steps Passed */
+            steps_passed: number;
+            /** Steps Total */
+            steps_total: number;
+            /** Test Case Id */
+            test_case_id: string | null;
+            /** Test Name */
+            test_name: string;
+            /** Version Number */
+            version_number: number;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1396,6 +1754,36 @@ export interface components {
                 [key: string]: string | null;
             };
         };
+        /** RunCreate */
+        RunCreate: {
+            /**
+             * Browser
+             * @default chromium
+             * @enum {string}
+             */
+            browser: "chromium" | "firefox" | "webkit";
+            /**
+             * Environment Id
+             * @description Defaults to the project's default environment.
+             */
+            environment_id?: string | null;
+            /**
+             * Screenshots
+             * @default every_step
+             * @enum {string}
+             */
+            screenshots: "every_step" | "on_failure" | "off";
+            /**
+             * Trace
+             * @default true
+             */
+            trace: boolean;
+            /**
+             * Video
+             * @default false
+             */
+            video: boolean;
+        };
         /** Step */
         Step: {
             /**
@@ -1527,6 +1915,54 @@ export interface components {
              * @description Environment variable name, UPPER_SNAKE_CASE.
              */
             name: string;
+        };
+        /** TestExecutionOut */
+        TestExecutionOut: {
+            /** Base Url */
+            base_url: string;
+            /**
+             * Browser
+             * @enum {string}
+             */
+            browser: "chromium" | "firefox" | "webkit";
+            /** Browser Version */
+            browser_version: string | null;
+            /** Duration Ms */
+            duration_ms: number | null;
+            /** Environment Id */
+            environment_id: string | null;
+            /** Environment Name */
+            environment_name: string;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Started At */
+            started_at: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "running" | "passed" | "failed" | "error" | "cancelled";
+            /** Steps */
+            steps: components["schemas"]["ExecutionStepOut"][];
+            /** Steps Failed */
+            steps_failed: number;
+            /** Steps Passed */
+            steps_passed: number;
+            /** Steps Total */
+            steps_total: number;
+            /** Test Case Id */
+            test_case_id: string | null;
+            /** Test Name */
+            test_name: string;
+            /** Test Version Id */
+            test_version_id: string | null;
+            /** Version Number */
+            version_number: number;
         };
         /** TestPlan */
         TestPlan: {
@@ -2128,6 +2564,37 @@ export interface operations {
             };
         };
     };
+    artifact_content_api_v1_artifacts__artifact_id__content_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                artifact_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_audit_logs_api_v1_audit_logs_get: {
         parameters: {
             query?: {
@@ -2596,6 +3063,190 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProjectOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    execution_runtime_api_v1_execution_runtime_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExecutionRuntimeOut"];
+                };
+            };
+        };
+    };
+    list_executions_api_v1_executions_get: {
+        parameters: {
+            query?: {
+                project_id?: string | null;
+                test_case_id?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExecutionSummaryOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_execution_api_v1_executions__execution_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                execution_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExecutionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_execution_api_v1_executions__execution_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                execution_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExecutionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_events_api_v1_executions__execution_id__events_get: {
+        parameters: {
+            query?: {
+                after_seq?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                execution_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExecutionEventOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stream_events_api_v1_executions__execution_id__events_stream_get: {
+        parameters: {
+            query?: {
+                after_seq?: number;
+            };
+            header?: {
+                "Last-Event-ID"?: string | null;
+            };
+            path: {
+                execution_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": unknown;
                 };
             };
             /** @description Validation Error */
@@ -3107,6 +3758,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_version_api_v1_versions__version_id__run_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExecutionOut"];
                 };
             };
             /** @description Validation Error */

@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouting } from "@/features/ai-providers/api";
+import { ExecutionsList } from "@/features/executions/ExecutionsList";
+import { RunTestDialog } from "@/features/executions/RunTestDialog";
 import { ApiError } from "@/lib/api-client";
 import type { PlanRecord, Project, Suite, TestCase } from "@/types/api";
 
@@ -173,6 +175,7 @@ export function CaseEditor({ project, caseId, suites }: { project: Project; case
   const navigate = useNavigate();
   const [manual, setManual] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [runOpen, setRunOpen] = useState(false);
   const [environmentId, setEnvironmentId] = useState(
     project.environments.find((e) => e.is_default)?.id ?? project.environments[0]?.id ?? "",
   );
@@ -181,6 +184,7 @@ export function CaseEditor({ project, caseId, suites }: { project: Project; case
   if (testCase.error) return <ErrorState error={testCase.error} onRetry={() => void testCase.refetch()} />;
   const data = testCase.data;
   const latest = data.latest_plan;
+  const currentVersion = data.versions.find((v) => v.id === data.current_version_id);
   const scenarioChanged = latest !== null && latest.scenario_snapshot !== data.scenario;
 
   const runGenerate = () =>
@@ -203,17 +207,13 @@ export function CaseEditor({ project, caseId, suites }: { project: Project; case
         </p>
         <div className="flex items-center gap-2">
           <Button
-            variant="secondary"
             size="sm"
-            disabled
-            title="Browser execution arrives in milestone 4"
-            aria-describedby="run-hint"
+            disabled={!currentVersion}
+            title={currentVersion ? undefined : "Approve a plan first"}
+            onClick={() => setRunOpen(true)}
           >
             <MonitorPlay /> Run test
           </Button>
-          <span id="run-hint" className="text-xs text-faint">
-            Runs arrive in milestone 4
-          </span>
           <Button variant="ghost" size="icon" className="size-8" aria-label="Delete test" onClick={() => setConfirmDelete(true)}>
             <Trash2 />
           </Button>
@@ -283,6 +283,21 @@ export function CaseEditor({ project, caseId, suites }: { project: Project; case
       {data.versions.length ? (
         <CodeViewer key={data.current_version_id ?? "none"} versions={data.versions} currentVersionId={data.current_version_id} />
       ) : null}
+
+      {currentVersion ? (
+        <section aria-labelledby="runs-heading" className="space-y-3">
+          <h2 id="runs-heading" className="text-[15px] font-semibold [font-stretch:100%]">
+            Recent runs
+          </h2>
+          <ExecutionsList caseId={caseId} limit={5} showTest={false} emptyHint="This test has not run yet." />
+        </section>
+      ) : null}
+
+      <Dialog open={runOpen} onOpenChange={setRunOpen}>
+        {currentVersion && runOpen ? (
+          <RunTestDialog project={project} versionId={currentVersion.id} versionNumber={currentVersion.version} testName={data.name} />
+        ) : null}
+      </Dialog>
 
       <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <DialogContent

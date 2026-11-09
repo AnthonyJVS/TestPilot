@@ -1,4 +1,5 @@
-# TestPilot API image. Used by both the `migrate` (one-shot) and `backend` services.
+# TestPilot API image. Used by the `migrate` (one-shot), `backend` and `worker` (Celery) services.
+# Browsers are not installed here: they run in the separate browser-worker image.
 FROM python:3.13-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -8,7 +9,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN groupadd --system app && useradd --system --gid app --home-dir /app --no-create-home app
+# Fixed UID shared with the browser-worker image (artifacts volume).
+RUN groupadd --gid 10001 app && useradd --uid 10001 --gid app --home-dir /app --no-create-home app \
+    && mkdir -p /artifacts && chown app:app /artifacts
 
 # Dependencies first (cached layer): read the pinned list straight from pyproject.toml.
 COPY pyproject.toml README.md ./
@@ -19,6 +22,8 @@ subprocess.check_call([sys.executable, '-m', 'pip', 'install', *deps])"
 COPY alembic.ini ./
 COPY alembic ./alembic
 COPY app ./app
+# Only the typed protocol is used by the API; the engine module needs Playwright and is not imported.
+COPY browser_worker ./browser_worker
 
 USER app
 EXPOSE 8000

@@ -1,7 +1,8 @@
 # Execution Center
 
-> Status: **Design** — event model and basic run view in Milestone 4,
-> full Execution Center and Browser Preview in Milestone 6.
+> Status: event pipeline, SSE stream, run view with step screenshots and timeline
+> **Implemented in Milestone 4** (see [BROWSER_EXECUTION.md](BROWSER_EXECUTION.md)); live
+> workflow canvas, node inspector and throttled in-progress frames follow in Milestone 6.
 
 ## 1. Layout
 

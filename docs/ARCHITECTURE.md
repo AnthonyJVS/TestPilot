@@ -12,7 +12,7 @@
 | Multi-LLM layer: Gemini, Claude, OpenAI adapters, encryption, routing, request log, AI Providers page | Implemented (M2); positive live call pending a real API key |
 | Additional providers (DeepSeek, Mistral, xAI, OpenRouter, Azure, Bedrock, Ollama, LM Studio) | Planned (M8), shown as unavailable |
 | Testing Workspace: projects, environments, encrypted test data, suites, tests, AI plan generation, plan editor, approval, versions, Playwright code | Implemented (M3); AI generation verified with test doubles, live run pending a real API key |
-| Browser execution worker | Design (M4) |
+| Browser execution: isolated browser worker, Celery orchestrator, events + SSE, artifacts, run view, history | Implemented (M4); verified locally in development mode (real Chromium), Docker path verified by the CI smoke run — see [BROWSER_EXECUTION.md](BROWSER_EXECUTION.md) |
 | Workflow Studio + DAG engine | Design (M5) |
 | Execution Center + Browser Preview | Design (M6) |
 | Failure analysis and repair | Design (M7) |
@@ -153,7 +153,7 @@ Tables (milestone of introduction in brackets):
 | Projects [M3] | `projects`, `project_environments`, `environment_variables` (secret values encrypted, write-only) |
 | Tests [M3] | `test_suites`, `test_cases`, `test_plans` (AI/user drafts with requirement analysis), `test_versions` (immutable approved versions: DSL steps + rendered code + parent version) |
 | Workflows [M5] | `workflows`, `workflow_versions` (immutable), `workflow_nodes`, `workflow_edges` |
-| Executions [M4/M5] | `workflow_executions` (pinned to a workflow version + resolved config snapshot), `workflow_node_executions`, `execution_events` (ordered by per-execution `seq`), `test_executions`, `execution_steps`, `execution_artifacts` |
+| Executions [M4 implemented, M5 adds workflow runs] | `workflow_executions` (pinned to a workflow version + resolved config snapshot), `workflow_node_executions`, `execution_events` (ordered by per-execution `seq`), `test_executions`, `execution_steps`, `execution_artifacts` |
 | Quality [M7/M8] | `failure_analyses`, `repair_proposals`, `reports` |
 
 Additions to the brief and why: `auth_sessions` + `refresh_tokens` (revocable
@@ -263,8 +263,8 @@ Full design: [WORKFLOW_ENGINE.md](WORKFLOW_ENGINE.md).
 | S3 | AI key leakage | Keys encrypted at rest (AES-GCM, versioned master key from env), write-only API, never returned, never logged, only decrypted inside the orchestrator at call time | M2 |
 | S4 | Secrets sent to AI providers | Test data referenced as `{{env.NAME}}` / `{{secret.NAME}}`; only names reach prompts; values injected into browser commands at execution time; redaction before persistence/display | M2–M4 |
 | S5 | Executing model-generated code | AI emits a restricted action DSL validated by Pydantic; no `eval`, no shell, no arbitrary JS; rendered code is display/export only | M3–M4 |
-| S6 | SSRF through the browser | Per-project allowed domains; block loopback, RFC1918, link-local, CGNAT, IPv6 ULA and cloud metadata (169.254.169.254, fd00:ec2::254); DNS resolution check and redirect re-validation on every request via route interception; network-level egress isolation for the worker container | M4 |
-| S7 | Browser exploit escaping | Worker container: non-root, read-only root FS, no Docker socket, no host mounts, CPU/memory/pids limits, per-run timeouts, fresh browser context per run, no DB/secrets | M4 |
+| S6 | SSRF through the browser | Per-project allowed domains; block loopback, RFC1918, link-local, CGNAT, IPv6 ULA and cloud metadata (169.254.169.254, fd00:ec2::254); DNS resolution check and redirect re-validation on every request via route interception; network-level egress isolation for the worker container | M4 (implemented; link-local/metadata blocked even when private targets are allowed) |
+| S7 | Browser exploit escaping | Worker container: non-root, read-only root FS, no Docker socket, no host mounts, CPU/memory/pids limits, per-run timeouts, fresh browser context per run, no DB/secrets; Redis reachable only over a dedicated network without PostgreSQL | M4 (implemented in compose) |
 | S8 | Prompt injection from target pages | Page content always wrapped as untrusted data in prompts; AI outputs constrained to schemas; AI cannot trigger actions outside the DSL; destructive steps need an Approval Gate | M3–M7 |
 | S9 | Cross-tenant data access | Ownership filter inside every repository query; artifacts served only through authorised endpoints; tests for IDOR on each resource | M1+ |
 | S10 | Sensitive data in logs/events | Central redaction (key-based and pattern-based) applied to logs, events and AI payload previews; configurable data-minimisation settings | M1/M2/M6 |

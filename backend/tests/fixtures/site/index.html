@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Fixture Todo</title>
+</head>
+<body>
+  <h1>Todos</h1>
+  <form id="login">
+    <label for="email">Email</label>
+    <input id="email" name="email">
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password">
+    <label for="token">API token</label>
+    <input id="token" name="token">
+    <button type="button" id="sign-in">Sign in</button>
+  </form>
+  <p data-testid="greeting"></p>
+  <input placeholder="What needs to be done?" id="new-todo">
+  <ul id="todos"></ul>
+  <img src="http://169.254.169.254/latest/meta-data/" alt="metadata probe" width="1" height="1">
+  <script>
+    document.getElementById("sign-in").addEventListener("click", () => {
+      const email = document.getElementById("email").value;
+      document.querySelector("[data-testid=greeting]").textContent = "Signed in as " + email;
+      console.log("signed in");
+    });
+    document.getElementById("new-todo").addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      const li = document.createElement("li");
+      li.dataset.testid = "todo-title";
+      li.textContent = event.target.value;
+      document.getElementById("todos").appendChild(li);
+      event.target.value = "";
+    });
+    console.error("fixture error message");
+    fetch("/missing.json");
+  </script>
+</body>
+</html>

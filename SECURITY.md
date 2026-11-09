@@ -6,7 +6,7 @@ Please do not open public issues for security problems. Contact the maintainer p
 with a description, reproduction steps and impact. You will get an acknowledgement and a
 fix timeline.
 
-## What is implemented (Milestones 1–2)
+## What is implemented (Milestones 1–4)
 
 | AI control (M2) | Implementation |
 | --- | --- |
@@ -27,6 +27,17 @@ fix timeline.
 | Secret placement | Secrets may only be typed into fields (`fill`/`select_option`), never asserted on or placed in URLs/screenshot names |
 | Immutability | Approved versions cannot be edited; changes create new drafts and new versions |
 
+| Execution control (M4) | Implementation |
+| --- | --- |
+| Browser isolation | Separate `browser-worker` container: no database access, no credentials, no `app` code (test-enforced); non-root, read-only root FS, `cap_drop: ALL`, `no-new-privileges`, memory/CPU/pids limits; reaches Redis over a dedicated network without PostgreSQL and the internet over its own network. Production refuses to start in the unisolated development mode |
+| Network policy | Every browser request is intercepted: http(s) only; top-level navigation limited to allowed domains; loopback/private/reserved targets blocked (opt-in for local apps); link-local and cloud metadata always blocked; DNS answers checked |
+| Test data | Decrypted only by the orchestrator at run time; secret-typed fields masked in screenshots; traces and video disabled for runs that type secrets; all worker output scrubbed of secret values before storage or streaming |
+| Evidence minimisation | Network logs keep method, URL without query string, status and timing (no headers or bodies); console text truncated; event counts capped |
+| Artifacts | Stored outside the web root, served only through owner-checked endpoints with fixed content types (`attachment` for non-images); the SPA loads them with the bearer token |
+| No generated code execution | The worker interprets the validated step DSL; rendered Playwright code is never executed |
+| Abuse limits | Per-run time limit, active runs per user, browser sessions per worker, idle session reaping; cancellation aborts the in-flight browser action |
+| Live events | SSE requires the bearer token in a header (fetch-based), is ownership-checked, ends after 10 minutes and resumes with `Last-Event-ID` |
+
 | Control | Implementation |
 | --- | --- |
 | Password storage | Argon2id (argon2-cffi defaults, RFC 9106 profile), automatic rehash on login when parameters change; 12–128 character passwords, not equal to the email |
@@ -46,9 +57,9 @@ fix timeline.
 ## Planned controls
 
 Tracked in [docs/ARCHITECTURE.md §6](docs/ARCHITECTURE.md#6-security-risks-and-mitigations):
-secret references kept out of AI prompts (M3–M4), browser
-worker sandbox with SSRF protection and egress limits (M4), prompt-injection controls
-(M3–M7), payload redaction in the Execution Center (M6), usage limits (M2/M8).
+prompt-injection controls (M3–M7), payload redaction in the Execution Center (M6), usage
+limits (M2/M8), artifact retention (M8), a Redis ACL user restricted to the `bw:*` keys for
+the browser worker, and DNS pinning to close the rebinding window of the network policy.
 
 ## Operating notes
 

@@ -161,8 +161,9 @@ edits every step with one form. See [TEST_PLAN_DSL.md](TEST_PLAN_DSL.md).
 (requirement analysis, test planning) inside the request (bounded by the AI
 timeout and retry limits) and returns the stored draft.
 **Consequences.** Simple and verifiable now; a slow provider holds one HTTP
-request for up to a minute. Milestone 4 moves generation onto the job queue
-with execution events so the Execution Center can show it live.
+request for up to a minute. *Update (M4):* the job queue and event pipeline now
+exist, but generation moves onto them in Milestone 5, as AI nodes of the
+workflow engine, so it is built once instead of twice.
 
 ## ADR-011 Test data and secrets as references (2026-11-08, accepted; implemented in M3/M4)
 
@@ -170,3 +171,30 @@ with execution events so the Execution Center can show it live.
 project environment. Only names are sent to AI providers. Values are resolved
 by the orchestrator when building browser commands and are redacted from
 events, logs and payload previews.
+
+## ADR-017 Two execution deployments, one code path (2026-11-09, accepted; implemented in M4)
+
+**Context.** The browser must run isolated (ADR-005), but the development machine has no
+Docker or Redis, and milestones must stay verifiable with real browsers.
+**Decision.** The orchestrator talks to a `BrowserClient` protocol and is started by a
+`JobQueue`. Production (and Docker Compose) uses `EXECUTION_MODE=celery` +
+`BROWSER_TRANSPORT=redis`: a Celery worker runs the orchestrator and the `browser-worker`
+container executes commands received over Redis. Development may use `inline` + `thread`:
+the same orchestrator as an asyncio task and the same `BrowserEngine` on a dedicated thread
+(own Proactor event loop on Windows) inside the API process. The settings validator refuses
+anything but `celery` + `redis` in production; every run records whether it was isolated and
+the UI labels development runs.
+**Consequences.** One engine and one orchestrator are tested with real Chromium locally and
+in CI; only the transport differs (covered by fakeredis tests and the CI Docker smoke run).
+
+## ADR-018 Evidence capture versus secrets (2026-11-09, accepted; implemented in M4)
+
+**Context.** Playwright traces and videos record typed text; screenshots show field values;
+page console and error messages can echo anything.
+**Decision.** Values typed from `{{secret.*}}` are flagged per step: the worker masks those
+fields in every later screenshot (Playwright `mask`). Runs whose plan uses secrets switch
+trace and video off (the run shows why). Everything returned by the worker is scrubbed of
+secret values before it is stored or streamed. Network logs keep method, URL without query
+string, status and timing only; no headers or bodies.
+**Consequences.** Secret-typing runs lose traces; plain-data runs keep full evidence.
+

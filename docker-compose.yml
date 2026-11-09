@@ -5,6 +5,10 @@
 #
 # Only the frontend (Nginx) port is published. PostgreSQL and Redis live on an internal
 # network without internet access; the API is reachable only through Nginx.
+#
+# Test runs (milestone 4): the API queues a job in Redis, the Celery `worker` orchestrates it and
+# sends browser commands over Redis to `browser-worker`, an isolated container with Playwright,
+# no database access, no credentials and its own networks (Redis + internet only).
 name: testpilot
 
 services:
@@ -35,7 +39,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
-    networks: [internal]
+    networks: [internal, browser]
 
   migrate:
     build: ./backend
@@ -54,6 +58,10 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       # The API port is not published; only Nginx on the compose network can reach it.
       FORWARDED_ALLOW_IPS: "*"
+      # Runs execute in the Celery worker and the isolated browser-worker container.
+      EXECUTION_MODE: celery
+      BROWSER_TRANSPORT: redis
+      ARTIFACTS_DIR: /artifacts
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,6 +72,8 @@ services:
     build: ./backend
     restart: unless-stopped
     environment: *backend-env
+    volumes:
+      - artifacts:/artifacts:ro  # served through ownership-checked endpoints only
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -71,6 +81,49 @@ services:
         condition: service_healthy
     # `edge` gives the API outbound internet access (needed for AI providers from milestone 2).
     networks: [internal, edge]
+
+  # Celery orchestrator: claims queued runs, resolves test data, drives the browser worker and
+  # records events. Holds DB and decryption keys, never runs a browser.
+  worker:
+    build: ./backend
+    restart: unless-stopped
+    command: ["celery", "-A", "app.worker", "worker", "--loglevel=INFO", "--concurrency=2"]
+    environment: *backend-env
+    healthcheck:
+      disable: true
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    networks: [internal, edge]
+
+  # Isolated browser worker: Playwright + browsers only. No database, no secrets; reaches Redis
+  # through a dedicated network and the internet through its own egress network.
+  browser-worker:
+    build:
+      context: ./backend
+      dockerfile: browser_worker.Dockerfile
+    restart: unless-stopped
+    environment:
+      BROWSER_WORKER_REDIS_URL: redis://redis:6379/0
+      BROWSER_MAX_SESSIONS: ${BROWSER_MAX_SESSIONS:-2}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - artifacts:/artifacts
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m
+    shm_size: 1gb
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 2g
+    pids_limit: 512
+    cpus: 2
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks: [browser, browser-egress]
 
   frontend:
     build: ./frontend
@@ -86,7 +139,13 @@ networks:
   internal:
     internal: true
   edge: {}
+  # Redis <-> browser worker only (no PostgreSQL, no API, no internet).
+  browser:
+    internal: true
+  # Outbound internet for the browser worker, shared with nothing else.
+  browser-egress: {}
 
 volumes:
   pgdata:
   redisdata:
+  artifacts:

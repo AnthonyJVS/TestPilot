@@ -9,6 +9,7 @@ import { useProject } from "./api";
 
 const TABS = [
   ["", "Tests"],
+  ["runs", "Runs"],
   ["environments", "Environments and test data"],
   ["settings", "Settings"],
 ] as const;

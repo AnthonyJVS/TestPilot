@@ -25,6 +25,7 @@ from app.infrastructure.cache.rate_limiter import (
 )
 from app.infrastructure.database.session import create_engine, create_session_factory
 from app.services.ai.registry import ProviderRegistry
+from app.services.execution.runtime import build_runtime, interrupt_orphaned_runs
 
 logger = logging.getLogger(__name__)
 
@@ -49,14 +50,20 @@ def create_app(
             limiter = InMemoryRateLimiter()
             logger.warning("REDIS_URL not set; using in-memory rate limiter (single process only).")
 
+        session_factory = create_session_factory(engine)
         app.state.settings = settings
         app.state.engine = engine
-        app.state.session_factory = create_session_factory(engine)
+        app.state.session_factory = session_factory
         app.state.redis = redis
         app.state.rate_limiter = limiter
         app.state.cipher = cipher
         app.state.provider_registry = registry
         app.state.started_at = time.monotonic()
+        if settings.execution_mode == "inline":
+            interrupted = await interrupt_orphaned_runs(session_factory)
+            if interrupted:
+                logger.warning("Marked %d unfinished runs as interrupted", interrupted)
+        app.state.execution = build_runtime(settings, session_factory, cipher, redis)
         logger.info(
             "TestPilot API started",
             extra={"environment": settings.app_env, "database": engine.dialect.name},
@@ -64,6 +71,7 @@ def create_app(
         try:
             yield
         finally:
+            await app.state.execution.aclose()
             if redis is not None:
                 await redis.aclose()
             await engine.dispose()

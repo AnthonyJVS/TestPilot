@@ -6,10 +6,13 @@ import { GuestOnly, RequireAuth, SessionGate } from "@/features/auth/guards";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { DashboardPage } from "@/features/dashboard/DashboardPage";
+import { ExecutionPage } from "@/features/executions/ExecutionPage";
+import { ExecutionsPage } from "@/features/executions/ExecutionsPage";
 import { NotFoundPage } from "@/features/not-found/NotFoundPage";
 import { PlannedPage } from "@/features/planned/PlannedPage";
 import { EnvironmentsTab } from "@/features/projects/EnvironmentsTab";
 import { ProjectLayout } from "@/features/projects/ProjectLayout";
+import { ProjectRunsTab } from "@/features/projects/ProjectRunsTab";
 import { ProjectsPage } from "@/features/projects/ProjectsPage";
 import { SettingsTab } from "@/features/projects/SettingsTab";
 import { TestsTab } from "@/features/projects/TestsTab";
@@ -48,10 +51,13 @@ export const routes: RouteObject[] = [
                 children: [
                   { index: true, element: <TestsTab /> },
                   { path: "tests/:caseId", element: <TestsTab /> },
+                  { path: "runs", element: <ProjectRunsTab /> },
                   { path: "environments", element: <EnvironmentsTab /> },
                   { path: "settings", element: <SettingsTab /> },
                 ],
               },
+              { path: "executions", element: <ExecutionsPage /> },
+              { path: "executions/:executionId", element: <ExecutionPage /> },
               { path: "ai-providers", element: <AiProvidersPage /> },
               { path: "settings", element: <SettingsPage /> },
               ...plannedRoutes,
