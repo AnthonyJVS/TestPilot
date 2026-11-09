@@ -31,9 +31,12 @@ def _context(base_url: str, allowed_domains: list[str], variables: dict[str, str
 ANALYSIS_SYSTEM = (
     "You are a senior QA analyst preparing an end-to-end browser test for TestPilot. "
     "Break the user's scenario into separate, observable, testable requirements. "
-    "List the test data it needs as environment variables in UPPER_SNAKE_CASE; mark passwords, "
-    "tokens and other credentials as kind 'secret', everything else as 'env'. Reuse existing "
-    "variable names when they fit. Never invent concrete credentials or personal data. "
+    "List as test data only values that must not be hard-coded: credentials, account "
+    "identifiers, personal data and values that differ between environments. Name them in "
+    "UPPER_SNAKE_CASE; mark passwords, tokens and other credentials as kind 'secret', everything "
+    "else as 'env'. Concrete example values the scenario states (an item title, a search term, an "
+    "expected message) are not test data: keep them literal. Reuse existing variable names when "
+    "they fit. Never invent concrete credentials or personal data. "
     "Record genuine ambiguities instead of guessing."
 )
 
@@ -62,10 +65,15 @@ Each step has an "action" and only the fields that action uses:
 - screenshot: value = short-name-with-dashes
 
 Locators: {"strategy": "role", "role": "button", "value": "<accessible name>"} is preferred, then
-"label", "text", "placeholder", "test_id". Use "css" only when nothing user-facing exists.
+"label", "text", "placeholder", "test_id". Use "css" only when nothing user-facing exists. For an
+element repeated in a list, prefer a role or text locator with "nth" (0-based) over CSS, for
+example {"strategy": "role", "role": "checkbox", "value": "<accessible name>", "nth": 0}.
 
 Test data: never write literal credentials or personal data. Use {{env.NAME}} or {{secret.NAME}}
-in values and declare every name in "test_data". Secrets may only appear in fill or select_option.
+for those and declare every name in "test_data". Secrets may only appear in fill or select_option.
+Concrete values the scenario states that are not credentials or personal data (an item title, a
+search term, an expected message) are written literally, without variables. Placeholders never
+appear in locators.
 
 Rules: start with goto; keep each description short and human readable; verify outcomes with
 expect_* steps (at least one); at most 30 steps; stay on the allowed domains; do not add steps the

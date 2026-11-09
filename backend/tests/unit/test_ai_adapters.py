@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
+from dataclasses import replace
 from typing import Any
 
 import httpx2
@@ -16,6 +17,7 @@ import pytest
 from app.services.ai.errors import (
     AIAuthError,
     AIContentFilteredError,
+    AIModelNotFoundError,
     AIQuotaExhaustedError,
     AIRateLimitError,
     AIUnavailableError,
@@ -447,3 +449,33 @@ async def test_openai_error_mapping(
         await OpenAIProvider(api_key="k", http_client=client(recorder)).generate(
             structured_request()
         )
+
+
+async def test_gemini_retired_model_is_explained() -> None:
+    """Seen live: models.list still returns gemini-2.5-flash, generate_content rejects it."""
+    body = {
+        "code": 404,
+        "status": "NOT_FOUND",
+        "message": "This model models/gemini-2.5-flash is no longer available to new users.",
+    }
+    provider = GeminiProvider(api_key="k", http_client=client(Recorder(gemini_error(404, body))))
+    with pytest.raises(AIModelNotFoundError) as info:
+        await provider.generate(structured_request())
+    assert "listed but not available to your key" in info.value.message
+
+
+async def test_gemini_schema_drops_array_bounds() -> None:
+    """Seen live: Gemini rejects responseJsonSchema containing minItems/maxItems."""
+    recorder = Recorder(gemini_ok)
+    provider = GeminiProvider(api_key="k", http_client=client(recorder))
+    schema = {
+        "type": "object",
+        "properties": {
+            "steps": {"type": "array", "items": {"type": "string"}, "minItems": 1, "maxItems": 100}
+        },
+        "required": ["steps"],
+    }
+    request = structured_request()
+    await provider.generate(replace(request, json_schema=schema))
+    sent = recorder.body()["generationConfig"]["responseJsonSchema"]
+    assert sent["properties"]["steps"] == {"type": "array", "items": {"type": "string"}}

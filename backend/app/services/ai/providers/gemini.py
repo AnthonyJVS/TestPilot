@@ -81,6 +81,24 @@ def _error_details(details: Any) -> list[dict[str, Any]]:
     return [item for item in items if isinstance(item, dict)]
 
 
+# Verified live (2026-11-09, gemini-3.5/3.6-flash): responseJsonSchema with minItems/maxItems
+# is rejected with a bare 400 INVALID_ARGUMENT. Array bounds are still enforced by Pydantic after
+# the response arrives (with one repair attempt), so they are dropped for Gemini only.
+_UNSUPPORTED_SCHEMA_KEYS = frozenset({"minItems", "maxItems"})
+
+
+def gemini_schema(node: Any) -> Any:
+    if isinstance(node, dict):
+        return {
+            key: gemini_schema(value)
+            for key, value in node.items()
+            if key not in _UNSUPPORTED_SCHEMA_KEYS
+        }
+    if isinstance(node, list):
+        return [gemini_schema(item) for item in node]
+    return node
+
+
 def map_gemini_error(exc: errors.APIError) -> AIProviderError:
     code = int(exc.code or 0)
     status = str(exc.status or "")
@@ -102,6 +120,11 @@ def map_gemini_error(exc: errors.APIError) -> AIProviderError:
     if code == 403 or status == "PERMISSION_DENIED":
         return AIPermissionError(f"Gemini denied access: {message}")
     if code == 404 or status == "NOT_FOUND":
+        if "no longer available" in message.lower():
+            # Listed by models.list but retired for this account (seen with gemini-2.5-flash).
+            return AIModelNotFoundError(
+                f"This Gemini model is listed but not available to your key: {message}"
+            )
         return AIModelNotFoundError(f"Gemini does not know this model: {message}")
     if status == "FAILED_PRECONDITION":
         return AIPermissionError(f"Gemini is not available for this request: {message}")
@@ -168,8 +191,10 @@ class GeminiProvider(AIProvider):
             temperature=request.temperature,
             max_output_tokens=request.max_output_tokens,
             response_mime_type="application/json" if request.json_schema is not None else None,
-            response_json_schema=request.json_schema if native else None,
+            response_json_schema=gemini_schema(request.json_schema) if native else None,
             http_options=types.HttpOptions(timeout=int(request.timeout_seconds * 1000)),
+            # TestPilot never passes tools; keep the SDK from looping on function calls.
+            automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
         )
         try:
             response = await self._client.aio.models.generate_content(
