@@ -56,6 +56,8 @@ from browser_worker.protocol import (
     CloseSessionResult,
     ConsoleEntry,
     ErrorCode,
+    FrameParams,
+    FrameResult,
     NetworkEntry,
     OpenSessionParams,
     OpenSessionResult,
@@ -72,6 +74,7 @@ EXPECT_DEFAULT_TIMEOUT_MS = 5_000  # Playwright's own expect() default, as in ex
 MAX_CONSOLE_ENTRIES = 300
 MAX_NETWORK_ENTRIES = 2_000
 MAX_SESSION_SECONDS = 30 * 60
+MAX_LIVE_FRAMES = 300
 _ANSI = re.compile(r"\x1b\[[0-9;]*m")
 _CONSOLE_LEVELS = {"log", "info", "warning", "error", "debug"}
 
@@ -162,6 +165,8 @@ class _Session:
     request_started: dict[int, float] = field(default_factory=dict)
     sensitive: list[Locator] = field(default_factory=list)
     closed: bool = False
+    current_step: int | None = None
+    live_frames: int = 0
 
     def touch(self) -> None:
         self.last_activity = time.monotonic()
@@ -350,6 +355,7 @@ class BrowserEngine:
             raise WorkerError("session.not_found", "The browser session no longer exists.")
         async with session.lock:
             session.touch()
+            session.current_step = params.index
             started = time.monotonic()
             error: StepError | None = None
             artifacts: list[ArtifactInfo] = []
@@ -504,6 +510,30 @@ class BrowserEngine:
         elif "strict mode violation" in message or "not an <input>" in message:
             code = "step.element_error"
         return StepError(code=code, message=message)
+
+    async def frame(self, params: FrameParams) -> FrameResult:
+        """A throttled in-progress frame for the live preview.
+
+        Deliberately does not take the session lock: it is called while a step is running.
+        """
+        session = self._sessions.get(params.session_id)
+        if session is None or session.closed or session.page.is_closed():
+            raise WorkerError("session.not_found", "The browser session no longer exists.")
+        if session.live_frames >= MAX_LIVE_FRAMES:
+            return FrameResult(step_index=session.current_step)
+        session.live_frames += 1
+        prefix = f"{session.params.label}-" if session.params.label else ""
+        path = session.directory / f"{prefix}live-{session.live_frames:04d}.jpg"
+        try:
+            await session.page.screenshot(
+                path=path, type="jpeg", quality=50, mask=session.sensitive, timeout=3_000
+            )
+        except PlaywrightError:
+            return FrameResult(step_index=session.current_step)
+        artifact = _artifact(self.artifacts_root, path, "frame", "image/jpeg", session.current_step)
+        return FrameResult(
+            artifact=artifact, url=strip_query(session.page.url), step_index=session.current_step
+        )
 
     async def _frame(self, session: _Session, index: int) -> ArtifactInfo | None:
         path = session.directory / f"step-{index:03d}.jpg"

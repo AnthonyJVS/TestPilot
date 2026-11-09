@@ -63,7 +63,7 @@ Local development needs the browser once: `python -m playwright install chromium
 
 ## 4. Worker protocol
 
-Typed Pydantic messages (`browser_worker/protocol.py`): `info`, `open`, `step`, `close`.
+Typed Pydantic messages (`browser_worker/protocol.py`): `info`, `open`, `step`, `frame`, `close`.
 Over Redis, `info`/`open` go to the shared `bw:requests` queue (taken by any worker with
 free capacity); `step`/`close` go to `bw:worker:<id>` of the worker that owns the session.
 Replies go to a per-request `bw:reply:<id>` list with a TTL; expired requests are dropped.
@@ -96,6 +96,7 @@ Result statuses: run `passed` / `failed` (the application or test failed) / `err
 | Artifact | When | Notes |
 | --- | --- | --- |
 | Step screenshot (JPEG) | after every step (or on failure / off) | secret-filled fields masked |
+| Live frame (JPEG) | about once per second while an action runs longer than a second | masked, lower quality, capped per run; for the live preview and replay |
 | Named screenshot (PNG) | `screenshot` steps | full page, masked |
 | Playwright trace | on by default | **off when the plan types secrets** (ADR-018) |
 | Video (WebM) | opt-in | off when the plan types secrets |

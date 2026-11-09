@@ -377,3 +377,38 @@ async def test_run_validation_and_ownership(
     runtime = (await client.get(f"{API}/execution-runtime", headers=headers)).json()
     assert runtime["mode"] == "inline" and runtime["isolated"] is False
     assert runtime["browsers"]["chromium"] is True and runtime["available"] is True
+
+
+async def test_long_steps_stream_live_frames_and_lists_filter(runner: Ctx, site_url: str) -> None:
+    client, headers = runner
+    steps = [
+        step("goto", "Open the app", value="/index.html"),
+        step(
+            "wait_for",
+            "Wait for something that never appears",
+            locator=locator("text", "Never shown"),
+            timeout_ms=3500,
+        ),
+    ]
+    _, version_id = await approved_version(client, headers, site_url, steps, with_data=False)
+    started = await client.post(f"{API}/versions/{version_id}/run", headers=headers, json={})
+    run = await wait_finished(client, headers, started.json()["id"])
+    assert run["status"] == "failed"
+
+    frames = [a for a in run["artifacts"] if a["kind"] == "frame"]
+    assert len(frames) >= 2  # about one per second while the 3.5 s wait was running
+    assert all(f["step_index"] == 1 and f["content_type"] == "image/jpeg" for f in frames)
+    events = (await client.get(f"{API}/executions/{run['id']}/events", headers=headers)).json()
+    live = [e for e in events if e["type"] == "browser.frame" and e["data"].get("interim")]
+    assert len(live) == len(frames)
+    # Live frames arrive while the step runs: before the step's result event.
+    failed_at = next(e["seq"] for e in events if e["type"] == "browser.step.failed")
+    assert all(e["seq"] < failed_at for e in live)
+    body = await client.get(f"{API}/artifacts/{frames[0]['id']}/content", headers=headers)
+    assert body.content[:3] == b"\xff\xd8\xff"
+
+    failed = (await client.get(f"{API}/executions?status=failed", headers=headers)).json()
+    assert [r["id"] for r in failed] == [run["id"]]
+    assert (await client.get(f"{API}/executions?status=passed", headers=headers)).json() == []
+    assert (await client.get(f"{API}/executions?kind=workflow", headers=headers)).json() == []
+    assert len((await client.get(f"{API}/executions?kind=test_run", headers=headers)).json()) == 1

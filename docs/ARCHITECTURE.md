@@ -14,7 +14,7 @@
 | Testing Workspace: projects, environments, encrypted test data, suites, tests, AI plan generation, plan editor, approval, versions, Playwright code | Implemented (M3); AI generation verified with test doubles, live run pending a real API key |
 | Browser execution: isolated browser worker, Celery orchestrator, events + SSE, artifacts, run view, history | Implemented (M4); verified locally in development mode (real Chromium), Docker path verified by the CI smoke run — see [BROWSER_EXECUTION.md](BROWSER_EXECUTION.md) |
 | Workflow Studio + DAG engine | Implemented (M5); engine verified with real Chromium and fake AI providers, live run of the Run-a-test template on demo.playwright.dev |
-| Execution Center + Browser Preview | Design (M6) |
+| Execution Center + Browser Preview | Implemented (M6): live frames, replay, inspector; verified with real Chromium and in the UI |
 | Failure analysis and repair | Design (M7) |
 | Reports, usage dashboard, CI/CD hardening | Design (M8) |
 

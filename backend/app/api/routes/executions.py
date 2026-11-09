@@ -6,7 +6,7 @@ import json
 import time
 import uuid
 from collections.abc import AsyncIterator
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, Header, Query, Request, status
 from fastapi.responses import FileResponse, StreamingResponse
@@ -205,6 +205,11 @@ async def list_executions(
     project_id: uuid.UUID | None = None,
     test_case_id: uuid.UUID | None = None,
     workflow_id: uuid.UUID | None = None,
+    status: Annotated[
+        Literal["active", "queued", "running", "passed", "failed", "error", "cancelled"] | None,
+        Query(),
+    ] = None,
+    kind: Literal["test_run", "workflow"] | None = None,
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
 ) -> list[ExecutionSummaryOut]:
     rows = await executions.list_runs(
@@ -212,6 +217,8 @@ async def list_executions(
         project_id=project_id,
         test_case_id=test_case_id,
         workflow_id=workflow_id,
+        status=status,
+        kind=kind,
         limit=limit,
     )
     return [_summary_out(execution, test, counts) for execution, test, counts in rows]

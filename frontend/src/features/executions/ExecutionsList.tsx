@@ -13,16 +13,20 @@ export function ExecutionsList({
   projectId,
   caseId,
   limit,
+  status,
+  kind,
   showTest = true,
   emptyHint,
 }: {
   projectId?: string;
   caseId?: string;
   limit?: number;
+  status?: string;
+  kind?: string;
   showTest?: boolean;
   emptyHint?: string;
 }) {
-  const runs = useExecutions({ projectId, caseId, limit });
+  const runs = useExecutions({ projectId, caseId, limit, status, kind });
 
   if (runs.isPending) return <Skeleton className="h-24 rounded-panel" />;
   if (runs.error) return <ErrorState error={runs.error} title="Runs could not be loaded" onRetry={() => void runs.refetch()} />;

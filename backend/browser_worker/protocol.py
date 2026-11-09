@@ -33,7 +33,8 @@ StepAction = Literal[
     "screenshot",
 ]
 
-ArtifactKind = Literal["screenshot", "trace", "video", "network_log", "console_log"]
+# "frame": throttled in-progress frames for the live Browser Preview (not step evidence).
+ArtifactKind = Literal["screenshot", "frame", "trace", "video", "network_log", "console_log"]
 
 # Stable error codes the orchestrator maps to user-facing results.
 ErrorCode = Literal[
@@ -134,6 +135,16 @@ class StepParams(_Model):
         return value
 
 
+class FrameParams(_Model):
+    session_id: str = Field(min_length=8, max_length=64)
+
+
+class FrameResult(_Model):
+    artifact: ArtifactInfo | None = None
+    url: str | None = Field(default=None, max_length=500)
+    step_index: int | None = None
+
+
 class CloseSessionParams(_Model):
     session_id: str = Field(min_length=8, max_length=64)
 
@@ -210,7 +221,7 @@ class WorkerInfo(_Model):
     active_sessions: int
 
 
-Method = Literal["info", "open", "step", "close"]
+Method = Literal["info", "open", "step", "frame", "close"]
 
 
 class RpcRequest(_Model):
@@ -240,3 +251,6 @@ class WorkerError(Exception):
         super().__init__(message)
         self.code: ErrorCode = code
         self.message = message
+
+
+FrameResult.model_rebuild()

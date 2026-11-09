@@ -1,23 +1,22 @@
 import "@xyflow/react/dist/style.css";
 
 import { Background, Controls, ReactFlow, ReactFlowProvider } from "@xyflow/react";
-import { AlertTriangle, Loader2, Square } from "lucide-react";
+import { X } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useNodeTypes } from "@/features/workflows/api";
 import { nodeTypes } from "@/features/workflows/flow-types";
 import { toFlow } from "@/features/workflows/graph";
-import { cn, formatDateTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useThemeStore } from "@/stores/theme-store";
-import type { Artifact, Execution, ExecutionEvent, NodeExecution, WorkflowRun } from "@/types/api";
+import type { Execution, ExecutionEvent, NodeExecution, WorkflowRun } from "@/types/api";
 
-import { TERMINAL, useCancelRun, type StreamState } from "./api";
-import { ArtifactsSection, LiveBadge, Preview, Timeline } from "./ExecutionPage";
+import { TERMINAL, type StreamState } from "./api";
+import { RunHeader } from "./ExecutionPage";
 import { formatMs } from "./format";
-import { RunStatus } from "./status";
+import { AIRequestDetails, ArtifactsSection, Evidence, Filmstrip, Preview, ReplayBar, Timeline } from "./parts";
+import { frameAt, framesOf, nodeStatesAt, useReplay } from "./replay";
 
 const NODE_TONE: Record<NodeExecution["status"], string> = {
   waiting: "text-faint",
@@ -40,91 +39,50 @@ export function WorkflowRunView({
   streamState: StreamState;
 }) {
   const live = !TERMINAL.has(execution.status);
-  const cancel = useCancelRun(execution.id);
   const defs = useNodeTypes();
   const theme = useThemeStore((s) => s.theme);
+  const replay = useReplay(events);
+  const frames = useMemo(() => framesOf(events), [events]);
   const [selected, setSelected] = useState<string | null>(null);
 
-  const runs = useMemo(() => new Map(workflow.nodes.map((n) => [n.node_id, n])), [workflow.nodes]);
+  // While replaying, node states are re-derived from the event log at the cursor.
+  const nodes = useMemo(() => {
+    if (!replay.replaying) return workflow.nodes;
+    const states = nodeStatesAt(events, replay.at);
+    return workflow.nodes.map((n): NodeExecution => {
+      const status = states.get(n.node_id) ?? "waiting";
+      const final = status === n.status;
+      return { ...n, status, summary: final ? n.summary : null, duration_ms: final ? n.duration_ms : null };
+    });
+  }, [workflow.nodes, events, replay.replaying, replay.at]);
+  const runs = useMemo(() => new Map(nodes.map((n) => [n.node_id, n])), [nodes]);
   const flow = useMemo(() => {
     if (!workflow.graph || !defs.data) return null;
     return toFlow(workflow.graph, new Map(defs.data.map((d) => [d.type, d])), { runs });
   }, [workflow.graph, defs.data, runs]);
 
-  const frames = useMemo(() => execution.artifacts.filter((a) => a.kind === "screenshot" && a.content_type === "image/jpeg"), [execution.artifacts]);
-  const frameEvents = useMemo(() => new Map(events.filter((e) => e.type === "browser.frame").map((e) => [String(e.data.artifact_id), e])), [events]);
-  const nodeFrames = selected ? frames.filter((a) => a.node_id === selected) : frames;
-  const frame: Artifact | undefined = nodeFrames[nodeFrames.length - 1];
-  const frameEvent = frame ? frameEvents.get(frame.id) : undefined;
-  const done = workflow.nodes.filter((n) => !["waiting", "running"].includes(n.status)).length;
-  const progress = workflow.nodes.length ? (done / workflow.nodes.length) * 100 : 0;
+  const frame = frameAt(frames, replay.at, { nodeId: selected });
+  const done = nodes.filter((n) => !["waiting", "running"].includes(n.status)).length;
+  const progress = nodes.length ? (done / nodes.length) * 100 : 0;
   const current = selected ? runs.get(selected) : undefined;
+  const running = live && !replay.replaying;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <header className="space-y-3">
-        <p className="text-[13px] text-faint">
-          <Link to="/executions" className="hover:text-text">
-            Executions
-          </Link>
-          {workflow.workflow_id ? (
-            <>
-              {" / "}
-              <Link to={`/workflows/${workflow.workflow_id}`} className="hover:text-text">
-                {workflow.workflow_name}
-              </Link>
-            </>
-          ) : null}
-        </p>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-[26px] font-semibold">
-              {workflow.workflow_name} <span className="font-normal text-faint">v{workflow.version}</span>
-            </h1>
-            <RunStatus status={execution.status} className="text-sm" />
-          </div>
-          <div className="flex items-center gap-2">
-            <LiveBadge state={streamState} live={live} />
-            {live ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={execution.cancel_requested || cancel.isPending}
-                onClick={() => cancel.mutate(undefined, { onSuccess: () => toast("Cancelling the run…") })}
-              >
-                {cancel.isPending ? <Loader2 className="animate-spin" /> : <Square />}
-                {execution.cancel_requested ? "Cancelling…" : "Cancel run"}
-              </Button>
-            ) : null}
-          </div>
-        </div>
-        <p className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-muted">
+      <RunHeader
+        execution={execution}
+        title={workflow.workflow_name}
+        version={workflow.version}
+        back={workflow.workflow_id ? { to: `/workflows/${workflow.workflow_id}`, label: workflow.workflow_name } : null}
+        streamState={streamState}
+        progress={progress}
+        meta={
           <span>
-            {done}/{workflow.nodes.length} nodes finished
+            {done}/{nodes.length} nodes finished
           </span>
-          <span>{execution.started_at ? formatDateTime(execution.started_at) : `Queued ${formatDateTime(execution.created_at)}`}</span>
-          <span className="font-mono">{formatMs(execution.duration_ms)}</span>
-          <span className={execution.isolated ? "text-completed" : "text-warning"}>
-            {execution.isolated ? "Isolated browser worker" : "Development mode (not isolated)"}
-          </span>
-        </p>
-        <div className="h-1 overflow-hidden rounded-full bg-sunken" role="progressbar" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100} aria-label="Run progress">
-          <div
-            className={cn("h-full transition-[width] duration-500", execution.status === "passed" ? "bg-completed" : execution.status === "failed" || execution.status === "error" ? "bg-failed" : "bg-beacon")}
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        {execution.notes.map((note) => (
-          <p key={note} className="flex gap-2 rounded-control border border-border bg-raised/50 px-3 py-2 text-[13px] text-muted">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden /> {note}
-          </p>
-        ))}
-        {execution.error_message && execution.status !== "passed" ? (
-          <p role="alert" className="rounded-control border border-failed/40 bg-failed/10 px-3 py-2 text-[13px] whitespace-pre-wrap text-failed">
-            {execution.error_message}
-          </p>
-        ) : null}
-      </header>
+        }
+      />
+      <ReplayBar replay={replay} events={events} live={live} />
 
       <section aria-label="Workflow canvas" className="h-[380px] overflow-hidden rounded-panel border border-border bg-sunken">
         {flow ? (
@@ -133,8 +91,8 @@ export function WorkflowRunView({
               nodes={flow.nodes.map((n) => ({ ...n, selected: n.id === selected }))}
               edges={flow.edges.map((e) => {
                 const source = runs.get(e.source);
-                const flowing = source?.status === "completed" && !(e.sourceHandle === "error");
-                return { ...e, animated: live && flowing };
+                const flowing = source?.status === "completed" && e.sourceHandle !== "error";
+                return { ...e, animated: running && flowing };
               })}
               nodeTypes={nodeTypes}
               nodesDraggable={false}
@@ -162,7 +120,7 @@ export function WorkflowRunView({
             Nodes
           </h2>
           <ol className="divide-y divide-border overflow-hidden rounded-panel border border-border bg-panel">
-            {workflow.nodes.map((node) => (
+            {nodes.map((node) => (
               <li key={node.node_id} className={cn(selected === node.node_id && "bg-raised/60")}>
                 <button
                   type="button"
@@ -182,44 +140,110 @@ export function WorkflowRunView({
               </li>
             ))}
           </ol>
-          {current ? <NodeDetails node={current} /> : <p className="text-xs text-faint">Select a node on the canvas or in the list to inspect it.</p>}
+          {current ? (
+            <NodeInspector key={current.node_id} node={workflow.nodes.find((n) => n.node_id === current.node_id) ?? current} events={events.filter((e) => e.node_id === current.node_id)} onClose={() => setSelected(null)} />
+          ) : (
+            <p className="text-xs text-faint">Select a node on the canvas or in the list to inspect it.</p>
+          )}
         </section>
         <section aria-labelledby="preview-heading" className="space-y-3">
           <h2 id="preview-heading" className="text-[15px] font-semibold [font-stretch:100%]">
-            Browser preview
+            Browser preview {selected ? <span className="font-normal text-faint">· {runs.get(selected)?.label}</span> : null}
           </h2>
           <Preview
-            artifact={frame}
-            url={typeof frameEvent?.data.url === "string" ? frameEvent.data.url : null}
-            caption={frame ? `After ${runs.get(frame.node_id ?? "")?.label ?? frame.node_id}` : null}
+            frame={frame}
+            caption={frame ? `${frame.interim ? "During" : "After"} ${runs.get(frame.nodeId ?? "")?.label ?? frame.nodeId}` : null}
             live={live}
+            startTs={events[0]?.ts}
           />
+          <Filmstrip frames={frames} at={replay.at} onSeek={replay.seek} label={(f) => runs.get(f.nodeId ?? "")?.label ?? "Frame"} />
         </section>
       </div>
 
-      <Timeline events={selected ? events.filter((e) => e.node_id === selected || e.category === "system") : events} />
+      <Timeline events={selected ? events.filter((e) => e.node_id === selected || e.category === "system") : events} at={replay.at} replaying={replay.replaying} onSeek={replay.seek} />
       <ArtifactsSection execution={execution} live={live} />
     </div>
   );
 }
 
-function NodeDetails({ node }: { node: NodeExecution }) {
+const TABS = ["Overview", "Evidence", "AI"] as const;
+
+function NodeInspector({ node, events, onClose }: { node: NodeExecution; events: ExecutionEvent[]; onClose: () => void }) {
+  const aiRequests = events.filter((e) => e.type === "ai.request.completed" && typeof e.data.ai_request_id === "string").map((e) => String(e.data.ai_request_id));
+  const tabs = TABS.filter((t) => t !== "AI" || aiRequests.length > 0 || node.node_type.startsWith("ai."));
+  const [tab, setTab] = useState<(typeof TABS)[number]>(aiRequests.length ? "AI" : "Overview");
   return (
-    <div className="space-y-2 rounded-panel border border-border bg-panel p-4 text-[13px]">
-      <p className="font-medium">{node.label}</p>
-      {node.summary ? <p className="text-muted">{node.summary}</p> : null}
-      {node.error_message ? (
-        <pre className="max-h-48 overflow-auto rounded-control border border-failed/30 bg-failed/5 p-2.5 font-mono text-[12px] whitespace-pre-wrap text-failed">
-          {node.error_code}: {node.error_message}
-        </pre>
+    <div className="space-y-3 rounded-panel border border-border bg-panel p-4 text-[13px]" aria-label={`${node.label} details`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-medium">{node.label}</p>
+          <p className="font-mono text-[11px] text-faint">
+            {node.node_type} · {node.node_id}
+          </p>
+        </div>
+        <Button variant="ghost" size="icon" className="size-7" aria-label="Close node details" onClick={onClose}>
+          <X />
+        </Button>
+      </div>
+      <div role="tablist" aria-label="Node details" className="flex gap-1 border-b border-border">
+        {tabs.map((name) => (
+          <button
+            key={name}
+            role="tab"
+            type="button"
+            aria-selected={tab === name}
+            onClick={() => setTab(name)}
+            className={cn("-mb-px border-b-2 px-2.5 py-1.5 text-xs", tab === name ? "border-beacon text-text" : "border-transparent text-muted hover:text-text")}
+          >
+            {name}
+            {name === "AI" && aiRequests.length ? ` (${aiRequests.length})` : ""}
+          </button>
+        ))}
+      </div>
+      {tab === "Overview" ? (
+        <div className="space-y-2">
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[12px]">
+            <dt className="text-faint">Status</dt>
+            <dd className={cn("capitalize", NODE_TONE[node.status])}>{node.status}</dd>
+            <dt className="text-faint">Attempts</dt>
+            <dd>{node.attempts}</dd>
+            <dt className="text-faint">Duration</dt>
+            <dd>{formatMs(node.duration_ms)}</dd>
+            {node.summary ? (
+              <>
+                <dt className="text-faint">Summary</dt>
+                <dd>{node.summary}</dd>
+              </>
+            ) : null}
+          </dl>
+          {node.error_message ? (
+            <pre className="max-h-48 overflow-auto rounded-control border border-failed/30 bg-failed/5 p-2.5 font-mono text-[12px] whitespace-pre-wrap text-failed">
+              {node.error_code}: {node.error_message}
+            </pre>
+          ) : null}
+          {node.output ? (
+            <>
+              <p className="text-xs font-medium text-muted">Output (secrets removed)</p>
+              <pre className="max-h-64 overflow-auto rounded-control border border-border bg-sunken p-2.5 font-mono text-[12px] leading-5 whitespace-pre-wrap break-words text-muted">
+                {JSON.stringify(node.output, null, 2)}
+              </pre>
+            </>
+          ) : null}
+        </div>
       ) : null}
-      {node.output ? (
-        <>
-          <p className="text-xs font-medium text-muted">Output</p>
-          <pre className="max-h-64 overflow-auto rounded-control border border-border bg-sunken p-2.5 font-mono text-[12px] leading-5 whitespace-pre-wrap break-words text-muted">
-            {JSON.stringify(node.output, null, 2)}
-          </pre>
-        </>
+      {tab === "Evidence" ? (
+        <div className="space-y-2">
+          <p className="text-xs text-faint">
+            {events.filter((e) => e.type.startsWith("browser.step")).length} browser actions ·{" "}
+            {events.filter((e) => e.type === "browser.frame").length} screenshots and frames
+          </p>
+          <Evidence events={events} />
+        </div>
+      ) : null}
+      {tab === "AI" ? (
+        <div className="space-y-2">
+          {aiRequests.length ? aiRequests.map((id) => <AIRequestDetails key={id} id={id} />) : <p className="text-xs text-faint">No AI call was made by this node yet.</p>}
+        </div>
       ) : null}
     </div>
   );

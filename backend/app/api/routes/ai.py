@@ -15,6 +15,7 @@ from app.api.dependencies.ai import (
     get_provider_service,
     get_routing_service,
 )
+from app.domain.exceptions import NotFoundError
 from app.infrastructure.database.models import AIModelConfiguration, AIProviderConnection, AIRequest
 from app.schemas.ai import (
     AIRequestOut,
@@ -256,6 +257,17 @@ async def check_task_route(
 
 
 # -------------------------------------------------------------- request log
+
+
+@router.get("/requests/{request_id}", response_model=AIRequestOut)
+async def get_ai_request(request_id: uuid.UUID, user: CurrentUser, db: DbSession) -> AIRequestOut:
+    """One AI call with its sanitized previews (Execution Center inspector)."""
+    record = await db.scalar(
+        select(AIRequest).where(AIRequest.id == request_id, AIRequest.owner_id == user.id)
+    )
+    if record is None:
+        raise NotFoundError("AI request not found.")
+    return AIRequestOut.model_validate(record)
 
 
 @router.get("/requests", response_model=AIRequestPage)

@@ -38,7 +38,7 @@ class ExecutionStepOut(BaseModel):
 
 class ArtifactOut(BaseModel):
     id: uuid.UUID
-    kind: Literal["screenshot", "trace", "video", "network_log", "console_log"]
+    kind: Literal["screenshot", "frame", "trace", "video", "network_log", "console_log"]
     name: str
     content_type: str
     size_bytes: int

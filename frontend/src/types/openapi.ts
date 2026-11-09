@@ -144,6 +144,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ai/requests/{request_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ai Request
+         * @description One AI call with its sanitized previews (Execution Center inspector).
+         */
+        get: operations["get_ai_request_api_v1_ai_requests__request_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/ai/routing": {
         parameters: {
             query?: never;
@@ -984,7 +1004,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "screenshot" | "trace" | "video" | "network_log" | "console_log";
+            kind: "screenshot" | "frame" | "trace" | "video" | "network_log" | "console_log";
             /** Name */
             name: string;
             /** Node Id */
@@ -2970,6 +2990,37 @@ export interface operations {
             };
         };
     };
+    get_ai_request_api_v1_ai_requests__request_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIRequestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_routing_api_v1_ai_routing_get: {
         parameters: {
             query?: never;
@@ -3592,6 +3643,8 @@ export interface operations {
                 project_id?: string | null;
                 test_case_id?: string | null;
                 workflow_id?: string | null;
+                status?: ("active" | "queued" | "running" | "passed" | "failed" | "error" | "cancelled") | null;
+                kind?: ("test_run" | "workflow") | null;
                 limit?: number;
             };
             header?: never;

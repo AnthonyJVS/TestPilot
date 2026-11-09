@@ -273,6 +273,8 @@ class ExecutionService:
         test_case_id: uuid.UUID | None = None,
         limit: int = 50,
         workflow_id: uuid.UUID | None = None,
+        status: str | None = None,
+        kind: str | None = None,
     ) -> list[tuple[WorkflowExecution, TestExecution | None, tuple[int, int]]]:
         query = (
             select(WorkflowExecution, TestExecution)
@@ -287,6 +289,12 @@ class ExecutionService:
             query = query.where(TestExecution.test_case_id == test_case_id)
         if workflow_id is not None:
             query = query.where(WorkflowExecution.workflow_id == workflow_id)
+        if status == "active":
+            query = query.where(WorkflowExecution.status.in_(("queued", "running")))
+        elif status is not None:
+            query = query.where(WorkflowExecution.status == status)
+        if kind is not None:
+            query = query.where(WorkflowExecution.kind == kind)
         rows = [(e, t) for e, t in (await self._db.execute(query)).all()]
         expired = False
         for execution, _ in rows:
@@ -298,6 +306,8 @@ class ExecutionService:
                 test_case_id=test_case_id,
                 limit=limit,
                 workflow_id=workflow_id,
+                status=status,
+                kind=kind,
             )
         counts: dict[uuid.UUID, tuple[int, int]] = {}
         workflow_ids = [e.id for e, t in rows if t is None]

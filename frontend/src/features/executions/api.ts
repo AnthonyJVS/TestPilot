@@ -7,7 +7,7 @@ import type { Execution, ExecutionEvent, ExecutionRuntime, ExecutionSummary, Run
 
 export const executionKeys = {
   all: ["executions"] as const,
-  list: (filters: { projectId?: string; caseId?: string }) => ["executions", "list", filters] as const,
+  list: (filters: { projectId?: string; caseId?: string; status?: string; kind?: string }) => ["executions", "list", filters] as const,
   detail: (id: string) => ["executions", id] as const,
   runtime: ["execution-runtime"] as const,
 };
@@ -22,14 +22,16 @@ export function useExecutionRuntime() {
   });
 }
 
-export function useExecutions(filters: { projectId?: string; caseId?: string; limit?: number } = {}) {
+export function useExecutions(filters: { projectId?: string; caseId?: string; limit?: number; status?: string; kind?: string } = {}) {
   const params = new URLSearchParams();
   if (filters.projectId) params.set("project_id", filters.projectId);
   if (filters.caseId) params.set("test_case_id", filters.caseId);
+  if (filters.status) params.set("status", filters.status);
+  if (filters.kind) params.set("kind", filters.kind);
   if (filters.limit) params.set("limit", String(filters.limit));
   const query = params.toString();
   return useQuery({
-    queryKey: executionKeys.list({ projectId: filters.projectId, caseId: filters.caseId }),
+    queryKey: executionKeys.list({ projectId: filters.projectId, caseId: filters.caseId, status: filters.status, kind: filters.kind }),
     queryFn: ({ signal }) => apiRequest<ExecutionSummary[]>(`/executions${query ? `?${query}` : ""}`, { signal }),
     // Keep history fresh while something is still running elsewhere.
     refetchInterval: (q) => (q.state.data?.some((e) => !TERMINAL.has(e.status)) ? 3000 : false),

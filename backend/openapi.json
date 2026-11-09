@@ -384,6 +384,7 @@
           "kind": {
             "enum": [
               "screenshot",
+              "frame",
               "trace",
               "video",
               "network_log",
@@ -5348,6 +5349,55 @@
         ]
       }
     },
+    "/api/v1/ai/requests/{request_id}": {
+      "get": {
+        "description": "One AI call with its sanitized previews (Execution Center inspector).",
+        "operationId": "get_ai_request_api_v1_ai_requests__request_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Ai Request",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
     "/api/v1/ai/routing": {
       "get": {
         "operationId": "get_routing_api_v1_ai_routing_get",
@@ -6373,6 +6423,51 @@
                 }
               ],
               "title": "Workflow Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "active",
+                    "queued",
+                    "running",
+                    "passed",
+                    "failed",
+                    "error",
+                    "cancelled"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "test_run",
+                    "workflow"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
             }
           },
           {

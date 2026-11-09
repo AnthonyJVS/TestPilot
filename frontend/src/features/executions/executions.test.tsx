@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
@@ -113,5 +113,33 @@ describe("Execution page", () => {
     expect(screen.queryByText("Step 1 passed in 420 ms")).not.toBeInTheDocument();
     expect(screen.getByText("[error] fixture error message")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Cancel run/ })).not.toBeInTheDocument();
+  });
+  it("replays the run to an earlier moment and back to the end", async () => {
+    const events = [
+      event(1, "execution.started", "Run started", { category: "system" }),
+      event(2, "browser.step.started", "Step 1: Open the login page", { node_id: "execute_test", step_index: 0 }),
+      event(3, "browser.step.passed", "Step 1 passed in 420 ms", { node_id: "execute_test", step_index: 0 }),
+      event(4, "browser.step.started", "Step 2: Greeting is shown", { node_id: "execute_test", step_index: 1 }),
+      event(5, "browser.step.failed", "Step 2 failed", { node_id: "execute_test", step_index: 1, level: "error" }),
+      event(6, "execution.failed", "Step 2 failed", { category: "system", level: "error" }),
+    ];
+    mockFetch(auth, (url) => {
+      if (url === "/api/v1/executions/x1") return json(200, execution);
+      if (url === "/api/v1/executions/x1/events/stream") return sse(events);
+      if (url.startsWith("/api/v1/versions/")) return json(404, { error: { code: "resource.not_found", message: "x", request_id: null, details: null } });
+      if (url.startsWith("/api/v1/artifacts/")) return new Response(new Blob(["img"]), { status: 200 });
+      return undefined;
+    });
+    renderApp("/executions/x1");
+    const slider = await screen.findByRole("slider", { name: "Replay position" });
+    expect(screen.getByText("End of run")).toBeInTheDocument();
+    const steps = screen.getByRole("region", { name: /Steps/ });
+    expect(within(steps).getByText("Skipped")).toBeInTheDocument();
+
+    fireEvent.change(slider, { target: { value: "2" } });
+    expect(within(steps).getByText("Running")).toBeInTheDocument();
+    expect(within(steps).getAllByText("Pending")).toHaveLength(2);
+    await userEvent.click(screen.getByRole("button", { name: "Show the end" }));
+    expect(within(steps).getByText("Skipped")).toBeInTheDocument();
   });
 });

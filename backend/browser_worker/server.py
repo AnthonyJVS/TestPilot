@@ -26,6 +26,7 @@ from browser_worker.protocol import (
     REPLY_PREFIX,
     REQUEST_QUEUE,
     CloseSessionParams,
+    FrameParams,
     OpenSessionParams,
     RpcError,
     RpcRequest,
@@ -50,6 +51,8 @@ async def dispatch(engine: BrowserEngine, request: RpcRequest) -> RpcResponse:
                 result = await engine.open(OpenSessionParams.model_validate(request.params))
             case "step":
                 result = await engine.step(StepParams.model_validate(request.params))
+            case "frame":
+                result = await engine.frame(FrameParams.model_validate(request.params))
             case "close":
                 result = await engine.close(CloseSessionParams.model_validate(request.params))
         return RpcResponse(id=request.id, ok=True, result=result.model_dump(mode="json"))

@@ -28,6 +28,7 @@ from app.services.ai.registry import ProviderRegistry
 from app.services.ai.router import TaskRouter
 from app.services.execution.browser_client import BrowserClient
 from app.services.execution.events import EventRecorder
+from app.services.execution.live_frames import FrameBudget, LiveFrames
 from app.services.execution.test_data import (
     MissingVariablesError,
     SecretScrubber,
@@ -41,6 +42,7 @@ from browser_worker.protocol import (
     CaptureOptions,
     CloseSessionParams,
     ConsoleEntry,
+    FrameResult,
     NetworkEntry,
     OpenSessionParams,
     OpenSessionResult,
@@ -117,6 +119,7 @@ class RunContext:
         self.environments = environments
         self.uses_secrets = uses_secrets
         self.sessions: dict[str, SessionState] = {}
+        self.frames = FrameBudget()
         self._step_counter = 0
         self._details = 0
         all_variables: dict[str, Variable] = {}
@@ -142,7 +145,7 @@ class RunContext:
             await self._db.commit()
 
     async def add_artifact(
-        self, info: ArtifactInfo, *, node_id: str, url: str | None = None
+        self, info: ArtifactInfo, *, node_id: str, url: str | None = None, interim: bool = False
     ) -> None:
         path = PurePosixPath(info.path)
         if path.is_absolute() or ".." in path.parts or path.parts[:1] != (str(self.execution.id),):
@@ -164,15 +167,17 @@ class RunContext:
             self._db.add(artifact)
             await self._db.flush()
             frame = info.content_type == "image/jpeg"
+            title = "Live frame" if interim else f"Screenshot from node {node_id}"
             self.recorder.add(
                 "browser.frame" if frame else "artifact.created",
-                f"Screenshot after {node_id}" if frame else f"{info.kind} saved: {info.name}",
+                title if frame else f"{info.kind} saved: {info.name}",
                 category="browser",
                 node_id=node_id,
                 step_index=info.step_index,
                 data={
                     "artifact_id": str(artifact.id),
                     "kind": info.kind,
+                    "interim": interim,
                     "url": url,
                     "content_type": info.content_type,
                 },
@@ -239,10 +244,24 @@ class RunContext:
                 screenshot_name=command.screenshot_name,
             )
             wait = max(step.timeout_ms or 0, 30_000) / 1000 + 30
-            try:
-                raw = await self.browser.step(
-                    params, worker_id=state.opened.worker_id, wait_seconds=wait
+
+            async def on_frame(frame: FrameResult) -> None:
+                assert frame.artifact is not None
+                await self.add_artifact(
+                    frame.artifact, node_id=node_id, url=frame.url, interim=True
                 )
+
+            try:
+                async with LiveFrames(
+                    self.browser,
+                    session_id=state.opened.session_id,
+                    worker_id=state.opened.worker_id,
+                    budget=self.frames,
+                    on_frame=on_frame,
+                ):
+                    raw = await self.browser.step(
+                        params, worker_id=state.opened.worker_id, wait_seconds=wait
+                    )
             except WorkerError as exc:
                 raise NodeError(
                     exc.code, exc.message, transient=exc.code in TRANSIENT_WORKER_ERRORS

@@ -14,7 +14,7 @@ import contextlib
 import logging
 import time
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import PurePosixPath
 
 from sqlalchemy import func, select, update
@@ -36,6 +36,7 @@ from app.infrastructure.database.models import (
 )
 from app.services.execution.browser_client import BrowserClient
 from app.services.execution.events import EventNotifier, EventRecorder
+from app.services.execution.live_frames import FrameBudget, LiveFrames
 from app.services.execution.test_data import (
     MissingVariablesError,
     SecretScrubber,
@@ -47,6 +48,7 @@ from browser_worker.protocol import (
     ArtifactInfo,
     CaptureOptions,
     CloseSessionParams,
+    FrameResult,
     OpenSessionParams,
     OpenSessionResult,
     StepParams,
@@ -95,6 +97,7 @@ class _Outcome:
 class _Session:
     opened: OpenSessionResult
     open: bool = True
+    frames: FrameBudget = field(default_factory=FrameBudget)
 
 
 class TestRunOrchestrator:
@@ -278,7 +281,7 @@ class TestRunOrchestrator:
                     sensitive=command.sensitive,
                     screenshot_name=command.screenshot_name,
                 )
-                result = await self._step(execution.id, session, params)
+                result = await self._step(db, rec, execution, test, session, params)
                 result = StepResult.model_validate(scrubber.data(result.model_dump()))
                 details = await self._record_step(db, rec, execution, test, row, result, details)
                 if result.status == "failed":
@@ -309,18 +312,35 @@ class TestRunOrchestrator:
             await self._collect(db, rec, execution, test, session, scrubber)
 
     async def _step(
-        self, execution_id: uuid.UUID, session: _Session, params: StepParams
+        self,
+        db: AsyncSession,
+        rec: EventRecorder,
+        execution: WorkflowExecution,
+        test: TestExecution,
+        session: _Session,
+        params: StepParams,
     ) -> StepResult:
         limits = [params.step.timeout_ms or 0, 30_000]
         timeout = max(limits) / 1000 + 30
         step_task = asyncio.create_task(
             self._browser.step(params, worker_id=session.opened.worker_id, wait_seconds=timeout)
         )
-        cancel_task = asyncio.create_task(self._wait_for_cancel(execution_id))
+        cancel_task = asyncio.create_task(self._wait_for_cancel(execution.id))
+
+        async def on_frame(frame: FrameResult) -> None:
+            await self._record_frame(db, rec, execution, test, frame)
+
         try:
-            done, _ = await asyncio.wait(
-                {step_task, cancel_task}, return_when=asyncio.FIRST_COMPLETED
-            )
+            async with LiveFrames(
+                self._browser,
+                session_id=session.opened.session_id,
+                worker_id=session.opened.worker_id,
+                budget=session.frames,
+                on_frame=on_frame,
+            ):
+                done, _ = await asyncio.wait(
+                    {step_task, cancel_task}, return_when=asyncio.FIRST_COMPLETED
+                )
         finally:
             cancel_task.cancel()
         if step_task in done:
@@ -330,6 +350,36 @@ class TestRunOrchestrator:
         with contextlib.suppress(Exception):
             await step_task
         raise _Cancelled
+
+    async def _record_frame(
+        self,
+        db: AsyncSession,
+        rec: EventRecorder,
+        execution: WorkflowExecution,
+        test: TestExecution,
+        frame: FrameResult,
+    ) -> None:
+        assert frame.artifact is not None
+        artifact = self._artifact(execution, test, frame.artifact)
+        if artifact is None:
+            return
+        db.add(artifact)
+        await db.flush()
+        rec.add(
+            "browser.frame",
+            "Live frame",
+            category="browser",
+            node_id=NODE_TEST,
+            step_index=frame.step_index,
+            data={
+                "artifact_id": str(artifact.id),
+                "kind": "frame",
+                "interim": True,
+                "url": frame.url,
+                "content_type": "image/jpeg",
+            },
+        )
+        await rec.flush()
 
     async def _wait_for_cancel(self, execution_id: uuid.UUID) -> None:
         # Polls the database: the cancel request may come from another process.

@@ -6,7 +6,7 @@ Please do not open public issues for security problems. Contact the maintainer p
 with a description, reproduction steps and impact. You will get an acknowledgement and a
 fix timeline.
 
-## What is implemented (Milestones 1–5)
+## What is implemented (Milestones 1–6)
 
 | AI control (M2) | Implementation |
 | --- | --- |
@@ -47,6 +47,12 @@ fix timeline.
 | Bounded execution | Per-node timeouts, at most 5 attempts with capped backoff, 4 parallel nodes, the workflow time limit and cooperative cancellation |
 | Stored outputs | Node outputs are scrubbed of secret values and size-limited before storage |
 | Ownership | Workflows, versions, runs and node results are owner-scoped (IDOR tests) |
+
+| Execution Center control (M6) | Implementation |
+| --- | --- |
+| Live frames | Taken by the isolated worker with the same secret masking as step screenshots; served only through owner-checked artifact endpoints; capped per run and per session |
+| AI call details | `GET /ai/requests/{id}` is owner-scoped and returns only the sanitized, redacted previews stored under the user's "Keep sanitized prompt and response copies" setting; every call is labelled as an external provider |
+| Replay | Re-derived in the browser from events the user may already read; no new data is exposed and test data stays as `{{env.*}}`/`{{secret.*}}` references |
 
 | Control | Implementation |
 | --- | --- |

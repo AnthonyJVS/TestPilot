@@ -6,14 +6,15 @@ Describe a test in plain language. TestPilot turns it into a structured, reviewa
 plan, executes it in an isolated browser, streams every step live, and explains failures —
 using one AI provider (a single Gemini key is enough) or several, routed per task.
 
-> **Project status: Milestone 5 (Workflow Studio) of 8.** Authentication, the dashboard,
+> **Project status: Milestone 6 (Execution Center) of 8.** Authentication, the dashboard,
 > the Docker stack, the AI provider layer (Gemini, Claude, OpenAI with Simple/Advanced
 > routing), the Testing Workspace (projects, encrypted test data, AI-generated editable test
 > plans, approval, versioned Playwright code) and real test runs in an isolated browser
 > worker (live events, step screenshots, traces, history) and Workflow Studio (visual node
 > editor with a real DAG engine: branches, retries, timeouts, error paths, AI and browser
-> nodes) work today. The full Execution Center, failure analysis and reports are scheduled —
-> they are labelled *Planned* in the UI and nothing about them is simulated.
+> nodes) and the Execution Center (live canvas, live browser frames, replay of any run,
+> node and step inspector with AI call details) work today. Failure analysis, repairs and
+> reports are scheduled — they are labelled *Planned* in the UI and nothing is simulated.
 > See the [roadmap](docs/DEVELOPMENT_ROADMAP.md).
 
 ## Features
@@ -27,7 +28,7 @@ using one AI provider (a single Gemini key is enough) or several, routed per tas
 | Testing Workspace: projects, environments, encrypted test data, suites, plain-language scenarios, AI requirement analysis and test plans, plan editor with validation, approval into immutable versions, deterministic Playwright code (Python and TypeScript) — see [TEST_PLAN_DSL.md](docs/TEST_PLAN_DSL.md) | ✅ Milestone 3 |
 | Isolated browser execution (Chromium, Firefox, WebKit): live step events over SSE, screenshots per step with secret masking, Playwright traces, video, console and network capture, network policy, cancellation, run history — see [BROWSER_EXECUTION.md](docs/BROWSER_EXECUTION.md) | ✅ Milestone 4 |
 | Workflow Studio: node palette, XYFlow canvas with typed ports, inspector generated from node schemas, live validation, immutable versions, duplicate, templates; DAG engine with branches, merges, retries, timeouts, error paths and cancellation; browser, test, AI and logic nodes — see [WORKFLOW_ENGINE.md](docs/WORKFLOW_ENGINE.md) | ✅ Milestone 5 |
-| Execution Center: live workflow canvas, node inspector, timeline and browser preview are in place (M4/M5); throttled in-progress frames, filters and replay polish | Planned — M6 |
+| Execution Center: live workflow canvas, Browser Preview with throttled live frames during long steps, replay of any run from its event log (scrubber, filmstrip, re-derived step/node states), node and step inspector (output, evidence, sanitized AI calls with provider and model), timeline filters and search, run filters — see [EXECUTION_CENTER.md](docs/EXECUTION_CENTER.md) | ✅ Milestone 6 |
 | Failure analysis and human-approved repairs | Planned — M7 |
 | HTML reports, AI usage dashboard, more providers | Planned — M8 |
 

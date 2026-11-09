@@ -404,6 +404,15 @@ async def test_ai_nodes_analyze_and_plan_through_the_router(studio: Ctx, site_ur
     assert [e["data"]["task"] for e in ai] == ["requirement_analysis", "test_planning"]
     assert ai[0]["data"]["actual_model"].startswith("fake-pro")  # as reported by the provider
 
+    detail = await client.get(
+        f"{API}/ai/requests/{ai[1]['data']['ai_request_id']}", headers=headers
+    )
+    assert detail.status_code == 200
+    assert detail.json()["task"] == "test_planning" and detail.json()["origin"] == "workflow"
+    other = bearer((await register(client, email="mallory@example.com")).json()["access_token"])
+    hidden = await client.get(f"{API}/ai/requests/{ai[1]['data']['ai_request_id']}", headers=other)
+    assert hidden.status_code == 404
+
 
 async def test_cancel_stops_running_nodes(studio: Ctx, site_url: str) -> None:
     client, headers = studio

@@ -27,6 +27,8 @@ from browser_worker.protocol import (
     REQUEST_QUEUE,
     CloseSessionParams,
     CloseSessionResult,
+    FrameParams,
+    FrameResult,
     Method,
     OpenSessionParams,
     OpenSessionResult,
@@ -47,6 +49,7 @@ T = TypeVar("T")
 INFO_TIMEOUT_SECONDS = 5.0
 OPEN_TIMEOUT_SECONDS = 60.0
 CLOSE_TIMEOUT_SECONDS = 60.0
+FRAME_TIMEOUT_SECONDS = 5.0
 
 
 class BrowserClient(Protocol):
@@ -57,6 +60,8 @@ class BrowserClient(Protocol):
     async def step(
         self, params: StepParams, *, worker_id: str, wait_seconds: float
     ) -> StepResult: ...
+
+    async def frame(self, params: FrameParams, *, worker_id: str) -> FrameResult: ...
 
     async def close(self, params: CloseSessionParams, *, worker_id: str) -> CloseSessionResult: ...
 
@@ -125,6 +130,10 @@ class ThreadedBrowserClient:
             )
         except TimeoutError as exc:
             raise WorkerError("worker.timeout", "The browser did not respond in time.") from exc
+        return result
+
+    async def frame(self, params: FrameParams, *, worker_id: str) -> FrameResult:
+        result: FrameResult = await self._call(lambda engine: engine.frame(params))
         return result
 
     async def close(self, params: CloseSessionParams, *, worker_id: str) -> CloseSessionResult:
@@ -209,6 +218,15 @@ class RedisBrowserClient:
             queue=worker_queue(worker_id),
             wait_seconds=wait_seconds,
             result_type=StepResult,
+        )
+
+    async def frame(self, params: FrameParams, *, worker_id: str) -> FrameResult:
+        return await self._call(
+            "frame",
+            params,
+            queue=worker_queue(worker_id),
+            wait_seconds=FRAME_TIMEOUT_SECONDS,
+            result_type=FrameResult,
         )
 
     async def close(self, params: CloseSessionParams, *, worker_id: str) -> CloseSessionResult:

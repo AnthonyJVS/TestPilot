@@ -1,8 +1,7 @@
 # Execution Center
 
-> Status: event pipeline, SSE stream, run view with step screenshots and timeline
-> **Implemented in Milestone 4** (see [BROWSER_EXECUTION.md](BROWSER_EXECUTION.md)); live
-> workflow canvas, node inspector and throttled in-progress frames follow in Milestone 6.
+> Status: **Implemented** — event pipeline and SSE (M4), live workflow canvas (M5), live
+> frames, replay and inspector (M6). §7 lists what v1 covers and what it does not.
 
 ## 1. Layout
 
@@ -101,3 +100,18 @@ v1 (M6) uses **real screenshots, never a simulated view**:
 Designed for later upgrade: Chromium CDP screencast frames relayed through
 Redis to the SSE stream, with the same UI component. No debugging port or
 remote-control interface is ever exposed to users.
+
+## 7. What v1 implements (Milestone 6)
+
+| Area | Implemented |
+| --- | --- |
+| Live frames | While a browser action runs longer than a second, the orchestrator asks the worker for a frame about once per second (`frame` RPC, JPEG quality 50, secret fields masked, no session lock). Frames are `frame` artifacts with `browser.frame` events (`interim: true`), capped at 120 per run (300 per session in the worker). Quick steps produce none. |
+| Browser Preview | Shows the latest frame (live or step screenshot) with its URL, an "in progress" badge for live frames, the step or node it belongs to and its time offset. Selecting a step or node shows that one's frames. |
+| Replay | The event log is the source of truth: a scrubber over `seq` re-derives step statuses (test runs) or node statuses on the canvas (workflows), the preview frame and the timeline position at any moment. Play steps through frames, steps and node transitions; a filmstrip of key frames jumps to a moment; "Back to live" follows the run again. Works the same for finished runs. |
+| Inspector | Test runs: step definition from the approved version (test data shown as references), duration, page URL, frame count, console and network evidence. Workflows: Overview (status, attempts, duration, scrubbed output), Evidence, and AI (each call from `GET /ai/requests/{id}`: external-provider label, requested and actual model, latency, tokens, attempts, fallback, sanitized prompt and validated response, cost shown as not estimated). |
+| Timeline | Category filters, "Problems only", text search, expandable event data, live follow, click a time to replay to it; live frames are hidden from the list (they stay in the preview). |
+| Run list | Status (including "In progress") and type filters, live counter of runs in progress. |
+
+Not in v1: CDP screencast streaming (the design upgrade path), side-by-side comparison of two
+runs, sharing a replay link with people outside the account.
+
