@@ -900,7 +900,9 @@ class DelayNode(NodeType):
 # ---------------------------------------------------------------------------- planned
 
 
-def _planned(type_id: str, category: str, label: str, description: str, milestone: int) -> type:
+def _planned(
+    type_id: str, category: str, label: str, description: str, milestone: int | None = None
+) -> type:
     return type(
         f"Planned_{type_id.replace('.', '_')}",
         (PlannedNode,),
@@ -921,24 +923,22 @@ PLANNED: list[type[NodeType]] = [
         "ai",
         "Playwright Code Generator",
         "AI-written Playwright code for review.",
-        8,
     ),
     _planned(
-        "ai.visual_analyzer", "ai", "Visual Analyzer", "Checks screenshots with a vision model.", 8
+        "ai.visual_analyzer", "ai", "Visual Analyzer", "Checks screenshots with a vision model."
     ),
     _planned(
         "ai.repair_proposal",
         "ai",
         "Test Repair Proposal",
         "Proposes a fix for human approval (available today from a failed test run).",
-        8,
     ),
-    _planned("ai.report_generator", "ai", "Report Generator", "Writes a run report.", 8),
-    _planned("logic.switch", "logic", "Switch", "Routes to one of several cases.", 8),
-    _planned("logic.approval_gate", "logic", "Approval Gate", "Pauses until a person approves.", 8),
-    _planned("data.transform", "data", "Transform Data", "Reshapes JSON with a mapping.", 8),
-    _planned("data.validate_schema", "data", "Validate Schema", "Checks JSON against a schema.", 8),
-    _planned("data.store_artifact", "data", "Store Artifact", "Saves data as a run artifact.", 8),
+    _planned("ai.report_generator", "ai", "Report Generator", "Writes a run report."),
+    _planned("logic.switch", "logic", "Switch", "Routes to one of several cases."),
+    _planned("logic.approval_gate", "logic", "Approval Gate", "Pauses until a person approves."),
+    _planned("data.transform", "data", "Transform Data", "Reshapes JSON with a mapping."),
+    _planned("data.validate_schema", "data", "Validate Schema", "Checks JSON against a schema."),
+    _planned("data.store_artifact", "data", "Store Artifact", "Saves data as a run artifact."),
 ]
 
 AVAILABLE: list[type[NodeType]] = [

@@ -20,6 +20,7 @@ from app.infrastructure.database.models import AIModelConfiguration, AIProviderC
 from app.schemas.ai import (
     AIRequestOut,
     AIRequestPage,
+    AIUsageOut,
     CapabilityOut,
     ConnectionTestOut,
     CredentialOut,
@@ -41,6 +42,7 @@ from app.services.ai.registry import ProviderRegistry
 from app.services.ai.routing_service import AIRoutingService
 from app.services.ai.task_checks import TaskCheckResult, run_task_check
 from app.services.ai.types import TaskCategory
+from app.services.ai.usage import usage_summary
 from app.services.audit_service import decode_cursor, encode_cursor
 
 router = APIRouter(prefix="/ai", tags=["ai"])
@@ -128,6 +130,8 @@ async def list_provider_types(_: CurrentUser, registry: Registry) -> list[Provid
             supports_model_listing=spec.supports_model_listing,
             key_help_url=spec.key_help_url,
             milestone=spec.milestone,
+            verified=spec.verified,
+            default_base_url=spec.default_base_url,
         )
         for spec in registry.all()
     ]
@@ -257,6 +261,14 @@ async def check_task_route(
 
 
 # -------------------------------------------------------------- request log
+
+
+@router.get("/usage", response_model=AIUsageOut)
+async def ai_usage(
+    user: CurrentUser, db: DbSession, days: Annotated[int, Query(ge=1, le=90)] = 14
+) -> AIUsageOut:
+    """Requests, failures, tokens and latency per day, model and task for this account."""
+    return AIUsageOut.model_validate(await usage_summary(db, user.id, days))
 
 
 @router.get("/requests/{request_id}", response_model=AIRequestOut)

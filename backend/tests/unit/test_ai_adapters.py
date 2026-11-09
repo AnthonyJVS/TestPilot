@@ -479,3 +479,36 @@ async def test_gemini_schema_drops_array_bounds() -> None:
     await provider.generate(replace(request, json_schema=schema))
     sent = recorder.body()["generationConfig"]["responseJsonSchema"]
     assert sent["properties"]["steps"] == {"type": "array", "items": {"type": "string"}}
+
+
+async def test_openai_compatible_providers_use_their_endpoint_and_parameters() -> None:
+    from app.services.ai.providers.openai_compatible import DeepSeekProvider, OllamaProvider
+
+    recorder = Recorder(openai_ok)
+    deepseek = DeepSeekProvider(api_key="ds-key", http_client=client(recorder))
+    await deepseek.generate(structured_request())
+    request = recorder.requests[-1]
+    assert request.url.host == "api.deepseek.com"
+    assert request.headers["authorization"] == "Bearer ds-key"
+    body = recorder.body()
+    assert body["max_tokens"] == 256 and "max_completion_tokens" not in body
+    # DeepSeek has JSON mode but no JSON Schema: the schema travels in the prompt instead.
+    assert body["response_format"] == {"type": "json_object"}
+    assert '"summary"' in body["messages"][-1]["content"][0]["text"]
+
+    local = Recorder(openai_ok)
+    ollama = OllamaProvider(api_key=None, http_client=client(local))
+    await ollama.generate(structured_request())
+    assert str(local.requests[-1].url).startswith("http://localhost:11434/v1/")
+    assert local.body()["response_format"]["type"] == "json_schema"
+
+
+async def test_openai_compatible_errors_name_the_provider() -> None:
+    from app.services.ai.providers.openai_compatible import MistralProvider
+
+    def unauthorized(_: httpx2.Request) -> httpx2.Response:
+        return httpx2.Response(401, json={"error": {"message": "bad key", "type": "auth"}})
+
+    provider = MistralProvider(api_key="k", http_client=client(Recorder(unauthorized)))
+    with pytest.raises(AIAuthError, match=r"^Mistral rejected the API key"):
+        await provider.generate(structured_request())

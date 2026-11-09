@@ -133,7 +133,7 @@ async def test_node_types_describe_ports_schemas_and_planned_nodes(studio: Ctx) 
     assert types["logic.condition"]["outputs"][0]["name"] == "true"
     assert types["data.input"]["entry"] is True
     assert types["ai.visual_analyzer"]["available"] is False
-    assert types["ai.visual_analyzer"]["milestone"] == 8
+    assert types["ai.visual_analyzer"]["milestone"] is None
 
 
 async def test_validation_reports_graph_problems_and_blocks_runs(

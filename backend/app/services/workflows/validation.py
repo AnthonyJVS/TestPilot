@@ -75,7 +75,12 @@ def validate_graph(
                 GraphIssue(
                     severity="error",
                     code="node.unavailable",
-                    message=f"{node_type.label} is planned for milestone {node_type.milestone}.",
+                    message=f"{node_type.label} is planned"
+                    + (
+                        f" for milestone {node_type.milestone}."
+                        if node_type.milestone
+                        else " after v1."
+                    ),
                     node_id=node.id,
                 )
             )

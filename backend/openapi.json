@@ -365,6 +365,68 @@
         "title": "AIRequestSummaryOut",
         "type": "object"
       },
+      "AIUsageOut": {
+        "description": "Aggregates of the AI request log. Costs are not estimated: no dated price source.",
+        "properties": {
+          "daily_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Limit"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/UsageDayOut"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/UsageModelOut"
+            },
+            "title": "Models",
+            "type": "array"
+          },
+          "origins": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Origins",
+            "type": "object"
+          },
+          "requests_today": {
+            "title": "Requests Today",
+            "type": "integer"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/UsageTaskOut"
+            },
+            "title": "Tasks",
+            "type": "array"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/UsageTotalsOut"
+          }
+        },
+        "required": [
+          "days",
+          "models",
+          "tasks",
+          "origins",
+          "totals",
+          "requests_today",
+          "daily_limit"
+        ],
+        "title": "AIUsageOut",
+        "type": "object"
+      },
       "ApprovalOut": {
         "properties": {
           "proposal": {
@@ -3401,6 +3463,17 @@
             "title": "Data Location",
             "type": "string"
           },
+          "default_base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Base Url"
+          },
           "description": {
             "title": "Description",
             "type": "string"
@@ -3450,6 +3523,10 @@
           "type_id": {
             "title": "Type Id",
             "type": "string"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
           }
         },
         "required": [
@@ -3462,7 +3539,9 @@
           "base_url_mode",
           "supports_model_listing",
           "key_help_url",
-          "milestone"
+          "milestone",
+          "verified",
+          "default_base_url"
         ],
         "title": "ProviderTypeOut",
         "type": "object"
@@ -4743,6 +4822,186 @@
           "user"
         ],
         "title": "TokenResponse",
+        "type": "object"
+      },
+      "UsageDayOut": {
+        "properties": {
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "requests": {
+            "title": "Requests",
+            "type": "integer"
+          },
+          "succeeded": {
+            "title": "Succeeded",
+            "type": "integer"
+          },
+          "tokens": {
+            "title": "Tokens",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "date",
+          "requests",
+          "succeeded",
+          "failed",
+          "tokens"
+        ],
+        "title": "UsageDayOut",
+        "type": "object"
+      },
+      "UsageModelOut": {
+        "properties": {
+          "avg_latency_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Latency Ms"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "fallbacks": {
+            "title": "Fallbacks",
+            "type": "integer"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "p95_latency_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P95 Latency Ms"
+          },
+          "provider_type": {
+            "title": "Provider Type",
+            "type": "string"
+          },
+          "requests": {
+            "title": "Requests",
+            "type": "integer"
+          },
+          "tokens": {
+            "title": "Tokens",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "provider_type",
+          "model",
+          "requests",
+          "failed",
+          "tokens",
+          "fallbacks",
+          "avg_latency_ms",
+          "p95_latency_ms"
+        ],
+        "title": "UsageModelOut",
+        "type": "object"
+      },
+      "UsageTaskOut": {
+        "properties": {
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "requests": {
+            "title": "Requests",
+            "type": "integer"
+          },
+          "task": {
+            "title": "Task",
+            "type": "string"
+          },
+          "tokens": {
+            "title": "Tokens",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "task",
+          "requests",
+          "tokens",
+          "failed"
+        ],
+        "title": "UsageTaskOut",
+        "type": "object"
+      },
+      "UsageTotalsOut": {
+        "properties": {
+          "avg_latency_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Latency Ms"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "fallbacks": {
+            "title": "Fallbacks",
+            "type": "integer"
+          },
+          "p95_latency_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P95 Latency Ms"
+          },
+          "requests": {
+            "title": "Requests",
+            "type": "integer"
+          },
+          "succeeded": {
+            "title": "Succeeded",
+            "type": "integer"
+          },
+          "tokens": {
+            "title": "Tokens",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "requests",
+          "succeeded",
+          "failed",
+          "tokens",
+          "fallbacks",
+          "avg_latency_ms",
+          "p95_latency_ms"
+        ],
+        "title": "UsageTotalsOut",
         "type": "object"
       },
       "UserOut": {
@@ -6101,6 +6360,57 @@
         ]
       }
     },
+    "/api/v1/ai/usage": {
+      "get": {
+        "description": "Requests, failures, tokens and latency per day, model and task for this account.",
+        "operationId": "ai_usage_api_v1_ai_usage_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 14,
+              "maximum": 90,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIUsageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Ai Usage",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
     "/api/v1/artifacts/{artifact_id}/content": {
       "get": {
         "operationId": "artifact_content_api_v1_artifacts__artifact_id__content_get",
@@ -7441,6 +7751,55 @@
         "summary": "Analyse Failure",
         "tags": [
           "quality"
+        ]
+      }
+    },
+    "/api/v1/executions/{execution_id}/report": {
+      "get": {
+        "description": "A self-contained HTML report of the run (screenshots embedded, scripts disabled).",
+        "operationId": "execution_report_api_v1_executions__execution_id__report_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "execution_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Execution Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Execution Report",
+        "tags": [
+          "executions"
         ]
       }
     },

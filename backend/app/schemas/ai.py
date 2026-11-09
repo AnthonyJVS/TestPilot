@@ -25,6 +25,8 @@ class ProviderTypeOut(BaseModel):
     supports_model_listing: bool
     key_help_url: str | None
     milestone: int | None
+    verified: bool
+    default_base_url: str | None
 
 
 # ---------------------------------------------------------------------- connections
@@ -216,3 +218,51 @@ class AIRequestOut(BaseModel):
 class AIRequestPage(BaseModel):
     items: list[AIRequestOut]
     next_cursor: str | None
+
+
+class UsageDayOut(BaseModel):
+    date: str
+    requests: int
+    succeeded: int
+    failed: int
+    tokens: int
+
+
+class UsageModelOut(BaseModel):
+    provider_type: str
+    model: str
+    requests: int
+    failed: int
+    tokens: int
+    fallbacks: int
+    avg_latency_ms: int | None
+    p95_latency_ms: int | None
+
+
+class UsageTaskOut(BaseModel):
+    task: str
+    requests: int
+    tokens: int
+    failed: int
+
+
+class UsageTotalsOut(BaseModel):
+    requests: int
+    succeeded: int
+    failed: int
+    tokens: int
+    fallbacks: int
+    avg_latency_ms: int | None
+    p95_latency_ms: int | None
+
+
+class AIUsageOut(BaseModel):
+    """Aggregates of the AI request log. Costs are not estimated: no dated price source."""
+
+    days: list[UsageDayOut]
+    models: list[UsageModelOut]
+    tasks: list[UsageTaskOut]
+    origins: dict[str, int]
+    totals: UsageTotalsOut
+    requests_today: int
+    daily_limit: int | None

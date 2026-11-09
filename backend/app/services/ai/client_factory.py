@@ -37,6 +37,10 @@ class ProviderClientFactory:
         except DecryptionError as exc:
             raise CredentialUnreadableError() from exc
 
+    @property
+    def settings(self) -> Settings:
+        return self._settings
+
     def build(self, connection: AIProviderConnection) -> AIProvider:
         return self._registry.create(
             connection.provider_type,

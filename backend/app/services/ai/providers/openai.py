@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import base64
 import re
+from dataclasses import replace
 from typing import Any
 
 import openai
@@ -50,45 +51,50 @@ def _schema_name(name: str) -> str:
     return cleaned or "result"
 
 
-def map_openai_error(exc: Exception) -> AIProviderError:
+def map_openai_error(exc: Exception, label: str = "OpenAI") -> AIProviderError:
     if isinstance(exc, openai.AuthenticationError):
-        return AIAuthError("OpenAI rejected the API key. Check or rotate it.")
+        return AIAuthError(f"{label} rejected the API key. Check or rotate it.")
     if isinstance(exc, openai.PermissionDeniedError):
-        return AIPermissionError(f"OpenAI denied access: {short(exc.message)}")
+        return AIPermissionError(f"{label} denied access: {short(exc.message)}")
     if isinstance(exc, openai.NotFoundError):
-        return AIModelNotFoundError(f"OpenAI does not know this model: {short(exc.message)}")
+        return AIModelNotFoundError(f"{label} does not know this model: {short(exc.message)}")
     if isinstance(exc, openai.RateLimitError):
         if getattr(exc, "code", None) == "insufficient_quota":
             return AIQuotaExhaustedError(
-                "The OpenAI quota or billing limit for this key is used up."
+                f"The {label} quota or billing limit for this key is used up."
             )
         retry_after = parse_retry_after(exc.response.headers.get("retry-after"))
         return AIRateLimitError(
-            f"OpenAI rate limit reached: {short(exc.message)}", retry_after=retry_after
+            f"{label} rate limit reached: {short(exc.message)}", retry_after=retry_after
         )
     if isinstance(exc, openai.BadRequestError | openai.UnprocessableEntityError):
-        return AIInvalidRequestError(f"OpenAI rejected the request: {short(exc.message)}")
+        return AIInvalidRequestError(f"{label} rejected the request: {short(exc.message)}")
     if isinstance(exc, openai.APITimeoutError):
-        return AITimeoutError("OpenAI did not respond in time.")
+        return AITimeoutError(f"{label} did not respond in time.")
     if isinstance(exc, openai.InternalServerError):
-        return AIUnavailableError("OpenAI is temporarily unavailable.")
+        return AIUnavailableError(f"{label} is temporarily unavailable.")
     if isinstance(exc, openai.APIConnectionError):
-        return AIUnavailableError("Cannot reach OpenAI.")
+        return AIUnavailableError(f"Cannot reach {label}.")
     if isinstance(exc, openai.APIStatusError):
         if exc.status_code >= 500:
-            return AIUnavailableError(f"OpenAI error {exc.status_code}.")
-        return AIInvalidRequestError(f"OpenAI rejected the request: {short(exc.message)}")
+            return AIUnavailableError(f"{label} error {exc.status_code}.")
+        return AIInvalidRequestError(f"{label} rejected the request: {short(exc.message)}")
     return AIProviderError(f"Unexpected OpenAI error: {type(exc).__name__}")
 
 
 class OpenAIProvider(AIProvider):
     type_id = "openai"
+    label = "OpenAI"
+    max_tokens_param = "max_completion_tokens"
+    json_schema_supported = True
+    default_base_url: str | None = None
+    placeholder_api_key: str | None = None  # for local servers that need no key
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self._client = openai.AsyncOpenAI(
-            api_key=self.api_key,
-            base_url=self.base_url or None,
+            api_key=self.api_key or self.placeholder_api_key,
+            base_url=self.base_url or self.default_base_url,
             max_retries=0,  # the orchestrator owns retries
             timeout=self.timeout_seconds,
             http_client=self.http_client,
@@ -102,10 +108,13 @@ class OpenAIProvider(AIProvider):
                 if not _NON_CHAT.search(model.id)
             ]
         except openai.OpenAIError as exc:
-            raise map_openai_error(exc) from exc
+            raise map_openai_error(exc, self.label) from exc
         return sorted(models, key=lambda m: m.model_id)
 
     async def generate(self, request: GenerateRequest) -> GenerateResponse:
+        # Providers without JSON Schema support get the schema in the prompt and JSON mode.
+        native = request.native_structured_output and self.json_schema_supported
+        request = replace(request, native_structured_output=native)
         content: list[dict[str, Any]] = [{"type": "text", "text": prompt_with_schema(request)}]
         for image in request.images:
             data = base64.b64encode(image.data).decode("ascii")
@@ -120,7 +129,7 @@ class OpenAIProvider(AIProvider):
         kwargs: dict[str, Any] = {
             "model": request.model,
             "messages": messages,
-            "max_completion_tokens": request.max_output_tokens,
+            self.max_tokens_param: request.max_output_tokens,
             "timeout": request.timeout_seconds,
         }
         if request.temperature is not None:
@@ -140,22 +149,22 @@ class OpenAIProvider(AIProvider):
         try:
             completion = await self._client.chat.completions.create(**kwargs)
         except openai.OpenAIError as exc:
-            raise map_openai_error(exc) from exc
+            raise map_openai_error(exc, self.label) from exc
 
         choice = completion.choices[0] if completion.choices else None
         if choice is None:
-            raise AIOutputInvalidError("OpenAI returned no choices.")
+            raise AIOutputInvalidError(f"{self.label} returned no choices.")
         if getattr(choice.message, "refusal", None):
             raise AIContentFilteredError(f"The model refused: {short(choice.message.refusal)}")
         if choice.finish_reason == "content_filter":
-            raise AIContentFilteredError("OpenAI's content filter stopped the response.")
+            raise AIContentFilteredError(f"{self.label}'s content filter stopped the response.")
         text = choice.message.content or ""
         if not text.strip():
             if choice.finish_reason == "length":
                 raise AIOutputInvalidError(
                     "The model reached the output token limit before answering."
                 )
-            raise AIOutputInvalidError("OpenAI returned an empty response.")
+            raise AIOutputInvalidError(f"{self.label} returned an empty response.")
         usage = completion.usage
         return GenerateResponse(
             text=text,

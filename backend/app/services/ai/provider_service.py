@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.crypto import SecretCipher
-from app.domain.exceptions import ConflictError, NotFoundError
+from app.domain.exceptions import ConflictError, FeatureDisabledError, NotFoundError
 from app.infrastructure.database.base import utcnow
 from app.infrastructure.database.models import (
     AICredential,
@@ -25,7 +25,7 @@ from app.services.ai.errors import AIProviderError
 from app.services.ai.exceptions import ProviderTypeUnavailableError, UnsafeBaseUrlError
 from app.services.ai.registry import ProviderRegistry, ProviderSpec, UnknownProviderTypeError
 from app.services.ai.types import ConnectionCheck, ModelInfo, unknown_capabilities
-from app.services.ai.url_policy import validate_public_https_url
+from app.services.ai.url_policy import validate_local_url, validate_public_https_url
 from app.services.audit_service import AuditService
 from app.services.context import RequestContext
 
@@ -301,6 +301,10 @@ class AIProviderService:
         return spec
 
     async def _checked_base_url(self, spec: ProviderSpec, base_url: str | None) -> str | None:
+        if spec.data_location == "local" and not self._clients.settings.local_providers_allowed:
+            raise FeatureDisabledError(
+                "Local AI providers are disabled on this server (AI_ALLOW_LOCAL_PROVIDERS)."
+            )
         if spec.base_url_mode == "none":
             if base_url:
                 raise UnsafeBaseUrlError(f"{spec.display_name} does not use a custom endpoint URL.")
@@ -309,6 +313,8 @@ class AIProviderService:
             if spec.base_url_mode == "required":
                 raise UnsafeBaseUrlError("An endpoint URL is required for this provider.")
             return None
+        if spec.data_location == "local":
+            return await validate_local_url(base_url)
         return await validate_public_https_url(base_url)
 
     def _attach_credential(

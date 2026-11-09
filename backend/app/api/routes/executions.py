@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 import uuid
 from collections.abc import AsyncIterator
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, Header, Query, Request, status
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 
 from app.api.dependencies import Ctx, CurrentUser, DbSession
 from app.domain.workflow import WorkflowGraph
@@ -34,6 +35,7 @@ from app.schemas.execution import (
 )
 from app.services.execution.execution_service import ExecutionService, fetch_events
 from app.services.execution.runtime import ExecutionRuntime
+from app.services.reports.report_service import ReportService
 from browser_worker.protocol import WorkerError
 
 router = APIRouter(tags=["executions"])
@@ -300,6 +302,40 @@ async def stream_events(
         generate(),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
+    )
+
+
+@router.get(
+    "/executions/{execution_id}/report",
+    response_class=HTMLResponse,
+    responses={200: {"content": {"text/html": {}}}},
+)
+async def execution_report(
+    execution_id: uuid.UUID,
+    user: CurrentUser,
+    executions: Executions,
+    runtime: Runtime,
+    db: DbSession,
+) -> HTMLResponse:
+    """A self-contained HTML report of the run (screenshots embedded, scripts disabled)."""
+    execution = await executions.get(user.id, execution_id)
+    html = await ReportService(db, runtime.artifacts_root, runtime.settings.app_version).build(
+        execution
+    )
+    name = (
+        execution.test_executions[0].test_name
+        if execution.test_executions
+        else str(execution.snapshot.get("workflow_name", "workflow"))
+    )
+    slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:40] or "run"
+    return HTMLResponse(
+        html,
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="testpilot-{slug}-{str(execution.id)[:8]}.html"'
+            ),
+            "Cache-Control": "private, no-store",
+        },
     )
 
 

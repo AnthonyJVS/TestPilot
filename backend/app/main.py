@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.api.errors import install_error_handlers
 from app.api.middleware import RequestContextMiddleware, SecurityHeadersMiddleware
@@ -24,6 +27,7 @@ from app.infrastructure.cache.rate_limiter import (
     RedisRateLimiter,
 )
 from app.infrastructure.database.session import create_engine, create_session_factory
+from app.maintenance import cleanup_artifacts
 from app.services.ai.registry import ProviderRegistry
 from app.services.execution.runtime import build_runtime, interrupt_orphaned_runs
 
@@ -64,6 +68,11 @@ def create_app(
             if interrupted:
                 logger.warning("Marked %d unfinished runs as interrupted", interrupted)
         app.state.execution = build_runtime(settings, session_factory, cipher, redis, registry)
+        housekeeping = (
+            asyncio.create_task(_housekeeping(session_factory, settings))
+            if settings.execution_mode == "inline" and settings.app_env != "test"
+            else None
+        )
         logger.info(
             "TestPilot API started",
             extra={"environment": settings.app_env, "database": engine.dialect.name},
@@ -71,6 +80,8 @@ def create_app(
         try:
             yield
         finally:
+            if housekeeping is not None:
+                housekeeping.cancel()
             await app.state.execution.aclose()
             if redis is not None:
                 await redis.aclose()
@@ -103,6 +114,20 @@ def create_app(
     app.include_router(health.router)
     app.include_router(api_router)
     return app
+
+
+async def _housekeeping(
+    session_factory: async_sessionmaker[AsyncSession], settings: Settings
+) -> None:
+    """Development only: artifact retention at start-up and every six hours."""
+    while True:
+        try:
+            await cleanup_artifacts(
+                session_factory, Path(settings.artifacts_dir), settings.artifact_retention_days
+            )
+        except Exception:
+            logger.warning("Artifact cleanup failed", exc_info=True)
+        await asyncio.sleep(6 * 3600)
 
 
 def app_factory() -> FastAPI:

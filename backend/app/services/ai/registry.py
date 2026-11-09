@@ -26,6 +26,9 @@ class ProviderSpec:
     key_help_url: str | None = None
     milestone: int | None = None
     factory: Callable[..., AIProvider] | None = None
+    # False until exercised with a live key; shown in the UI.
+    verified: bool = True
+    default_base_url: str | None = None
 
 
 def _gemini(**kwargs: Any) -> AIProvider:
@@ -46,16 +49,79 @@ def _openai(**kwargs: Any) -> AIProvider:
     return OpenAIProvider(**kwargs)
 
 
-# Planned integrations (milestone 8). Listed so the UI can show them honestly as unavailable.
+def _compatible(class_name: str) -> Callable[..., AIProvider]:
+    def factory(**kwargs: Any) -> AIProvider:
+        from app.services.ai.providers import openai_compatible
+
+        provider: AIProvider = getattr(openai_compatible, class_name)(**kwargs)
+        return provider
+
+    return factory
+
+
+# OpenAI-compatible providers: implemented, not yet verified with live keys.
+# (type_id, name, description, location, adapter class, default endpoint, key help)
+_COMPATIBLE: tuple[tuple[str, str, str, DataLocation, str, str, str | None], ...] = (
+    (
+        "deepseek",
+        "DeepSeek",
+        "DeepSeek models through the DeepSeek API.",
+        "external",
+        "DeepSeekProvider",
+        "https://api.deepseek.com",
+        "https://platform.deepseek.com/api_keys",
+    ),
+    (
+        "mistral",
+        "Mistral AI",
+        "Mistral models through La Plateforme.",
+        "external",
+        "MistralProvider",
+        "https://api.mistral.ai/v1",
+        "https://console.mistral.ai/api-keys",
+    ),
+    (
+        "xai",
+        "xAI Grok",
+        "Grok models through the xAI API.",
+        "external",
+        "XAIProvider",
+        "https://api.x.ai/v1",
+        "https://console.x.ai",
+    ),
+    (
+        "openrouter",
+        "OpenRouter",
+        "Many models through one OpenRouter key.",
+        "external",
+        "OpenRouterProvider",
+        "https://openrouter.ai/api/v1",
+        "https://openrouter.ai/keys",
+    ),
+    (
+        "ollama",
+        "Ollama",
+        "Models running on your own machine with Ollama. Nothing leaves it.",
+        "local",
+        "OllamaProvider",
+        "http://localhost:11434/v1",
+        None,
+    ),
+    (
+        "lmstudio",
+        "LM Studio",
+        "Models served locally by LM Studio. Nothing leaves your machine.",
+        "local",
+        "LMStudioProvider",
+        "http://localhost:1234/v1",
+        None,
+    ),
+)
+
+# Need their own protocols (Azure deployments and API versions, AWS SigV4): after v1.
 _PLANNED: tuple[tuple[str, str, str, DataLocation], ...] = (
-    ("deepseek", "DeepSeek", "DeepSeek API.", "external"),
-    ("mistral", "Mistral AI", "Mistral API.", "external"),
-    ("xai", "xAI Grok", "xAI API.", "external"),
-    ("openrouter", "OpenRouter", "Many models through one OpenRouter key.", "external"),
     ("azure_openai", "Azure OpenAI", "OpenAI models deployed in your Azure tenant.", "external"),
     ("aws_bedrock", "AWS Bedrock", "Models hosted in your AWS account.", "external"),
-    ("ollama", "Ollama", "Models running on your own machine.", "local"),
-    ("lmstudio", "LM Studio", "Models served locally by LM Studio.", "local"),
 )
 
 DEFAULT_SPECS: tuple[ProviderSpec, ...] = (
@@ -92,10 +158,25 @@ DEFAULT_SPECS: tuple[ProviderSpec, ...] = (
             type_id=type_id,
             display_name=name,
             description=description,
+            status="available",
+            data_location=location,
+            requires_api_key=location == "external",
+            base_url_mode="optional",
+            key_help_url=help_url,
+            factory=_compatible(class_name),
+            verified=False,
+            default_base_url=default_url,
+        )
+        for type_id, name, description, location, class_name, default_url, help_url in _COMPATIBLE
+    ),
+    *(
+        ProviderSpec(
+            type_id=type_id,
+            display_name=name,
+            description=description,
             status="planned",
             data_location=location,
             requires_api_key=location == "external",
-            milestone=8,
         )
         for type_id, name, description, location in _PLANNED
     ),

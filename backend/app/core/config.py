@@ -67,6 +67,9 @@ class Settings(BaseSettings):
     ai_request_timeout_seconds: float = Field(default=90.0, ge=5, le=600)
     ai_max_attempts: int = Field(default=3, ge=1, le=5)
     ai_max_retry_wait_seconds: float = Field(default=20.0, ge=0, le=120)
+    # Local model servers (Ollama, LM Studio) on loopback/LAN addresses. Default: on in
+    # development, off in production (it lets users point the API at internal hosts).
+    ai_allow_local_providers: bool | None = None
 
     # Test execution (M4). "inline" runs jobs inside the API process and "thread" hosts the
     # browser engine on a thread of that process: development only. Production requires the
@@ -74,6 +77,8 @@ class Settings(BaseSettings):
     execution_mode: Literal["inline", "celery"] = "inline"
     browser_transport: Literal["thread", "redis"] = "thread"
     artifacts_dir: str = "./data/artifacts"
+    # Days to keep screenshots, traces and logs of finished runs (0 keeps them forever).
+    artifact_retention_days: int = Field(default=30, ge=0, le=3650)
     # Allow tests against localhost/private networks (link-local metadata is always blocked).
     browser_allow_private_network: bool = False
     browser_max_sessions: int = Field(default=2, ge=1, le=16)
@@ -127,6 +132,12 @@ class Settings(BaseSettings):
         if needs_redis and not self.redis_url:
             raise ValueError("EXECUTION_MODE=celery and BROWSER_TRANSPORT=redis need REDIS_URL.")
         return self
+
+    @property
+    def local_providers_allowed(self) -> bool:
+        if self.ai_allow_local_providers is None:
+            return self.app_env != "production"
+        return self.ai_allow_local_providers
 
     @property
     def is_production(self) -> bool:

@@ -82,14 +82,8 @@ async def test_provider_catalog_marks_planned_providers(
         k for k, v in types.items() if v["status"] == "available"
     }
     for planned in (
-        "deepseek",
-        "mistral",
-        "xai",
-        "openrouter",
         "azure_openai",
         "aws_bedrock",
-        "ollama",
-        "lmstudio",
     ):
         assert types[planned]["status"] == "planned"
     assert types["ollama"]["data_location"] == "local"
@@ -160,7 +154,7 @@ async def test_creation_rules(ai: tuple[httpx.AsyncClient, dict[str, str]]) -> N
     planned = await client.post(
         f"{API}/providers",
         headers=headers,
-        json={"provider_type": "mistral", "name": "M", "api_key": "x" * 20},
+        json={"provider_type": "aws_bedrock", "name": "M", "api_key": "x" * 20},
     )
     assert planned.status_code == 400
     assert planned.json()["error"]["code"] == "ai.provider_type_unavailable"
@@ -570,3 +564,51 @@ async def test_deleting_a_provider_clears_routes_to_its_models(
     routing = (await client.get(f"{API}/routing", headers=headers)).json()
     assert routing["default_model_id"] is None
     assert all(r["model"] is None for r in routing["effective"])
+
+
+async def test_compatible_and_local_provider_catalog_and_endpoint_policy(
+    client_factory: ClientFactory,
+) -> None:
+    async with client_factory() as client:
+        headers = bearer((await register(client)).json()["access_token"])
+        types = {
+            t["type_id"]: t
+            for t in (await client.get("/api/v1/ai/provider-types", headers=headers)).json()
+        }
+        assert types["gemini"]["verified"] is True
+        assert types["deepseek"]["status"] == "available" and types["deepseek"]["verified"] is False
+        assert (
+            types["ollama"]["data_location"] == "local"
+            and types["ollama"]["requires_api_key"] is False
+        )
+        assert types["ollama"]["default_base_url"] == "http://localhost:11434/v1"
+        assert types["aws_bedrock"]["status"] == "planned"
+
+        metadata = await client.post(
+            "/api/v1/ai/providers",
+            headers=headers,
+            json={
+                "provider_type": "ollama",
+                "name": "Bad",
+                "base_url": "http://169.254.169.254/v1",
+            },
+        )
+        assert metadata.status_code == 422, metadata.text
+        local = await client.post(
+            "/api/v1/ai/providers",
+            headers=headers,
+            json={
+                "provider_type": "lmstudio",
+                "name": "Desk",
+                "base_url": "http://127.0.0.1:1234/v1",
+            },
+        )
+        assert local.status_code == 201, local.text
+        assert local.json()["base_url"] == "http://127.0.0.1:1234/v1"
+
+    async with client_factory(ai_allow_local_providers=False) as client:
+        headers = bearer((await register(client, email="ops@example.com")).json()["access_token"])
+        refused = await client.post(
+            "/api/v1/ai/providers", headers=headers, json={"provider_type": "ollama", "name": "Off"}
+        )
+        assert refused.status_code == 403
