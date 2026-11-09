@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import uuid
 from collections.abc import Sequence
 
@@ -29,12 +30,14 @@ from app.infrastructure.database.models import (
 from app.schemas.workflow import NodeTypeOut, PortOut, WorkflowCreate, WorkflowUpdate
 from app.services.audit_service import AuditService
 from app.services.context import RequestContext
-from app.services.execution.execution_service import TooManyRunsError
+from app.services.execution.execution_service import RunQueueUnavailableError, TooManyRunsError
 from app.services.execution.runtime import ExecutionRuntime
 from app.services.workflows import templates
 from app.services.workflows.catalog import node_registry
 from app.services.workflows.registry import NodeType, ValidationContext
 from app.services.workflows.validation import has_errors, validate_graph
+
+logger = logging.getLogger(__name__)
 
 
 class WorkflowRejectedError(AppError):
@@ -407,14 +410,12 @@ class WorkflowService:
         try:
             await self._runtime.jobs.enqueue(execution.id)
         except Exception as exc:
+            logger.exception("Could not queue execution %s", execution.id)
             execution.status, execution.finished_at = "error", utcnow()
             execution.error_code = "run.queue_unavailable"
             execution.error_message = "The run could not be queued."
             await self._db.commit()
-            raise AppError(
-                "The run could not be queued. Check that Redis and the worker are running.",
-                code="run.queue_unavailable",
-            ) from exc
+            raise RunQueueUnavailableError() from exc
         return execution.id
 
     async def _flush_unique(self) -> None:

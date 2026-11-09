@@ -18,6 +18,8 @@ COPY pyproject.toml README.md ./
 RUN python -c "import subprocess, sys, tomllib; \
 deps = tomllib.load(open('pyproject.toml', 'rb'))['project']['dependencies']; \
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', *deps])"
+# Fail the build, not the first test run, if the job queue's Redis transport cannot load.
+RUN python -c "import kombu.transport.redis, celery, redis; print('celery queue transport ok')"
 
 COPY alembic.ini ./
 COPY alembic ./alembic

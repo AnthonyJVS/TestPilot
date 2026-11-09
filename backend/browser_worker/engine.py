@@ -67,6 +67,7 @@ from browser_worker.protocol import (
     WorkerError,
     WorkerInfo,
 )
+from browser_worker.urls import resolve_url
 
 logger = logging.getLogger("browser_worker")
 
@@ -423,8 +424,7 @@ class BrowserEngine:
         locator = self._locator(page, step.locator) if step.locator else None
         match step.action:
             case "goto":
-                url = session.params.base_url + value if value.startswith("/") else value
-                await page.goto(url, timeout=timeout)
+                await page.goto(resolve_url(session.params.base_url, value), timeout=timeout)
             case "click":
                 assert locator is not None
                 await locator.click(timeout=timeout)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from collections.abc import Sequence
 from datetime import timedelta
@@ -38,6 +39,8 @@ from app.services.context import RequestContext
 from app.services.execution.runtime import ExecutionRuntime
 from app.services.execution.test_data import Variable, missing_variables, required_variables
 
+logger = logging.getLogger(__name__)
+
 STALE_GRACE = timedelta(minutes=2)
 VIEWPORT = {"width": 1280, "height": 800}
 
@@ -50,6 +53,14 @@ class RunRejectedError(AppError):
 class TooManyRunsError(AppError):
     code = "run.limit"
     http_status = 429
+
+
+class RunQueueUnavailableError(AppError):
+    """The job queue rejected the run: an infrastructure problem, not a bad request."""
+
+    code = "run.queue_unavailable"
+    http_status = 503
+    message = "The run could not be queued. Check that Redis and the worker are running."
 
 
 class ExecutionService:
@@ -200,11 +211,9 @@ class ExecutionService:
         try:
             await self._runtime.jobs.enqueue(execution.id)
         except Exception as exc:
+            logger.exception("Could not queue execution %s", execution.id)
             await self._fail_unqueued(execution.id)
-            raise AppError(
-                "The run could not be queued. Check that Redis and the worker are running.",
-                code="run.queue_unavailable",
-            ) from exc
+            raise RunQueueUnavailableError() from exc
         return await self.get(owner_id, execution.id)
 
     async def _environment(

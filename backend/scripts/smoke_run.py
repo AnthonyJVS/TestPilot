@@ -13,6 +13,7 @@ import json
 import secrets
 import sys
 import time
+import urllib.error
 import urllib.request
 from typing import Any
 
@@ -26,8 +27,13 @@ def call(method: str, path: str, body: Any = None) -> Any:
     request.add_header("Content-Type", "application/json")
     if TOKEN:
         request.add_header("Authorization", f"Bearer {TOKEN}")
-    with urllib.request.urlopen(request, timeout=60) as response:  # noqa: S310
-        return json.loads(response.read() or b"null")
+    try:
+        with urllib.request.urlopen(request, timeout=60) as response:  # noqa: S310
+            return json.loads(response.read() or b"null")
+    except urllib.error.HTTPError as exc:
+        # The API's error envelope (code, message, request_id) says what went wrong.
+        detail = exc.read().decode("utf-8", "replace")[:2000]
+        sys.exit(f"{method} {path} -> HTTP {exc.code}: {detail}")
 
 
 def main() -> None:

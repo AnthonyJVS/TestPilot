@@ -12,6 +12,7 @@ import re
 from dataclasses import dataclass
 
 from app.domain.test_plan import PLACEHOLDER, Locator, Step, TestPlan
+from browser_worker.urls import path_after_base
 
 RENDERER_VERSION = "1"
 
@@ -59,10 +60,12 @@ def _expr(text: str, usage: _Usage) -> str:
     return " + ".join(pieces)
 
 
-def _url_expr(value: str, usage: _Usage, base: str) -> str:
-    if value.startswith("/"):
-        return f"{base} + {_expr(value, usage)}"
-    return _expr(value, usage)
+def _url_expr(value: str, usage: _Usage, base: str, base_url: str) -> str:
+    # Same joining as the browser worker: a path that repeats the base URL's path is not doubled.
+    if not value.startswith("/"):
+        return _expr(value, usage)
+    rest = path_after_base(base_url, value)
+    return f"{base} + {_expr(rest, usage)}" if rest else base
 
 
 def _slug(name: str) -> str:
@@ -96,7 +99,7 @@ def _py_locator(locator: Locator) -> str:
     return f"{code}.nth({locator.nth})" if locator.nth is not None else code
 
 
-def _py_step(step: Step, usage: _Usage) -> str:
+def _py_step(step: Step, usage: _Usage, base_url: str) -> str:
     loc = _py_locator(step.locator) if step.locator else ""
     timeout = f"timeout={step.timeout_ms}" if step.timeout_ms else ""
     t_only = f"({timeout})"
@@ -104,7 +107,7 @@ def _py_step(step: Step, usage: _Usage) -> str:
     value = step.value or ""
     match step.action:
         case "goto":
-            return f"page.goto({_url_expr(value, usage, 'BASE_URL')}{t_extra})"
+            return f"page.goto({_url_expr(value, usage, 'BASE_URL', base_url)}{t_extra})"
         case "click":
             return f"{loc}.click{t_only}"
         case "fill":
@@ -144,7 +147,7 @@ def render_python(plan: TestPlan, *, base_url: str, version: int | None = None) 
     body: list[str] = []
     for index, step in enumerate(plan.steps, start=1):
         body.append(f"    # {_comment(index, step)}")
-        body.append(f"    {_py_step(step, usage)}")
+        body.append(f"    {_py_step(step, usage, base_url)}")
     origin = f"approved test version {version}" if version else "a test plan"
     lines = [
         f"# {plan.name}",
@@ -201,7 +204,7 @@ def _ts_locator(locator: Locator) -> str:
     return f"{code}.nth({locator.nth})" if locator.nth is not None else code
 
 
-def _ts_step(step: Step, usage: _Usage) -> str:
+def _ts_step(step: Step, usage: _Usage, base_url: str) -> str:
     loc = _ts_locator(step.locator) if step.locator else ""
     options = f"{{ timeout: {step.timeout_ms} }}" if step.timeout_ms else ""
     o_only = f"({options})"
@@ -209,7 +212,7 @@ def _ts_step(step: Step, usage: _Usage) -> str:
     value = step.value or ""
     match step.action:
         case "goto":
-            return f"await page.goto({_url_expr(value, usage, 'BASE_URL')}{o_extra});"
+            return f"await page.goto({_url_expr(value, usage, 'BASE_URL', base_url)}{o_extra});"
         case "click" | "check" | "uncheck":
             return f"await {loc}.{step.action}{o_only};"
         case "fill":
@@ -245,7 +248,7 @@ def render_typescript(plan: TestPlan, *, base_url: str, version: int | None = No
     body: list[str] = []
     for index, step in enumerate(plan.steps, start=1):
         body.append(f"  // {_comment(index, step)}")
-        body.append(f"  {_ts_step(step, usage)}")
+        body.append(f"  {_ts_step(step, usage, base_url)}")
     origin = f"approved test version {version}" if version else "a test plan"
     lines = [
         f"// {plan.name}",
