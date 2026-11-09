@@ -16,6 +16,7 @@ import { ProjectRunsTab } from "@/features/projects/ProjectRunsTab";
 import { ProjectsPage } from "@/features/projects/ProjectsPage";
 import { SettingsTab } from "@/features/projects/SettingsTab";
 import { TestsTab } from "@/features/projects/TestsTab";
+import { ReportsPage } from "@/features/reports/ReportsPage";
 import { SettingsPage } from "@/features/settings/SettingsPage";
 import { StudioPage } from "@/features/workflows/StudioPage";
 import { WorkflowsPage } from "@/features/workflows/WorkflowsPage";
@@ -61,6 +62,7 @@ export const routes: RouteObject[] = [
               { path: "workflows", element: <WorkflowsPage /> },
               { path: "workflows/:workflowId", element: <StudioPage /> },
               { path: "executions", element: <ExecutionsPage /> },
+              { path: "reports", element: <ReportsPage /> },
               { path: "executions/:executionId", element: <ExecutionPage /> },
               { path: "ai-providers", element: <AiProvidersPage /> },
               { path: "settings", element: <SettingsPage /> },

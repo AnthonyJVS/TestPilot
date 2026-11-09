@@ -202,6 +202,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ai/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ai Usage
+         * @description Requests, failures, tokens and latency per day, model and task for this account.
+         */
+        get: operations["ai_usage_api_v1_ai_usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/artifacts/{artifact_id}/content": {
         parameters: {
             query?: never;
@@ -536,6 +556,26 @@ export interface paths {
          * @description Collect evidence from a failed run and ask the routed AI model to explain it.
          */
         post: operations["analyse_failure_api_v1_executions__execution_id__failure_analysis_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/executions/{execution_id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Execution Report
+         * @description A self-contained HTML report of the run (screenshots embedded, scripts disabled).
+         */
+        get: operations["execution_report_api_v1_executions__execution_id__report_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1080,6 +1120,27 @@ export interface components {
             task: string | null;
             /** Total Tokens */
             total_tokens: number | null;
+        };
+        /**
+         * AIUsageOut
+         * @description Aggregates of the AI request log. Costs are not estimated: no dated price source.
+         */
+        AIUsageOut: {
+            /** Daily Limit */
+            daily_limit: number | null;
+            /** Days */
+            days: components["schemas"]["UsageDayOut"][];
+            /** Models */
+            models: components["schemas"]["UsageModelOut"][];
+            /** Origins */
+            origins: {
+                [key: string]: number;
+            };
+            /** Requests Today */
+            requests_today: number;
+            /** Tasks */
+            tasks: components["schemas"]["UsageTaskOut"][];
+            totals: components["schemas"]["UsageTotalsOut"];
         };
         /** ApprovalOut */
         ApprovalOut: {
@@ -2165,6 +2226,8 @@ export interface components {
              * @enum {string}
              */
             data_location: "external" | "local";
+            /** Default Base Url */
+            default_base_url: string | null;
             /** Description */
             description: string;
             /** Display Name */
@@ -2184,6 +2247,8 @@ export interface components {
             supports_model_listing: boolean;
             /** Type Id */
             type_id: string;
+            /** Verified */
+            verified: boolean;
         };
         /** ProviderUpdate */
         ProviderUpdate: {
@@ -2675,6 +2740,66 @@ export interface components {
              */
             token_type: "bearer";
             user: components["schemas"]["UserOut"];
+        };
+        /** UsageDayOut */
+        UsageDayOut: {
+            /** Date */
+            date: string;
+            /** Failed */
+            failed: number;
+            /** Requests */
+            requests: number;
+            /** Succeeded */
+            succeeded: number;
+            /** Tokens */
+            tokens: number;
+        };
+        /** UsageModelOut */
+        UsageModelOut: {
+            /** Avg Latency Ms */
+            avg_latency_ms: number | null;
+            /** Failed */
+            failed: number;
+            /** Fallbacks */
+            fallbacks: number;
+            /** Model */
+            model: string;
+            /** P95 Latency Ms */
+            p95_latency_ms: number | null;
+            /** Provider Type */
+            provider_type: string;
+            /** Requests */
+            requests: number;
+            /** Tokens */
+            tokens: number;
+        };
+        /** UsageTaskOut */
+        UsageTaskOut: {
+            /** Failed */
+            failed: number;
+            /** Requests */
+            requests: number;
+            /** Task */
+            task: string;
+            /** Tokens */
+            tokens: number;
+        };
+        /** UsageTotalsOut */
+        UsageTotalsOut: {
+            /** Avg Latency Ms */
+            avg_latency_ms: number | null;
+            /** Failed */
+            failed: number;
+            /** Fallbacks */
+            fallbacks: number;
+            /** P95 Latency Ms */
+            p95_latency_ms: number | null;
+            /** Requests */
+            requests: number;
+            /** Succeeded */
+            succeeded: number;
+            /** Tokens */
+            tokens: number;
         };
         /** UserOut */
         UserOut: {
@@ -3409,6 +3534,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TaskCheckOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ai_usage_api_v1_ai_usage_get: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIUsageOut"];
                 };
             };
             /** @description Validation Error */
@@ -4170,6 +4326,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FailureAnalysisOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    execution_report_api_v1_executions__execution_id__report_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                execution_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/html": string;
                 };
             };
             /** @description Validation Error */

@@ -9,6 +9,7 @@ import type { Routing } from "@/types/api";
 
 import { AddProviderDialog } from "./AddProviderDialog";
 import { AIActivity } from "./AIActivity";
+import { AIUsage } from "./AIUsage";
 import { useProviders, useProviderTypes, useRouting } from "./api";
 import { ProviderPanel } from "./ProviderPanel";
 import { RoutingPanel } from "./RoutingPanel";
@@ -137,6 +138,7 @@ export function AiProvidersPage() {
         title="AI activity"
         description="Every AI request made for your account, with the model that actually answered. Expand a row for sanitized payloads."
       >
+        <AIUsage />
         <AIActivity />
       </Section>
 

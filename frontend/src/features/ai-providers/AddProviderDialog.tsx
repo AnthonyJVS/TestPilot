@@ -105,12 +105,13 @@ export function AddProviderDialog({
                   )}
                 >
                   {type.display_name}
+                  {type.verified ? null : <span className="ml-1 text-[10px] text-faint">unverified</span>}
                 </button>
               ))}
             </div>
             {planned.length ? (
               <p className="mt-2 text-xs text-faint">
-                Planned for milestone 8: {planned.map((t) => t.display_name).join(", ")}.
+                Planned after v1 (they need their own protocols): {planned.map((t) => t.display_name).join(", ")}.
               </p>
             ) : null}
           </fieldset>
@@ -130,6 +131,12 @@ export function AddProviderDialog({
                     : "Requests stay on your machine."}
                 </span>
               </p>
+              {!selected.verified ? (
+                <p className="rounded-control border border-warning/40 bg-warning/10 px-3 py-2 text-[13px] text-warning">
+                  Unverified: built on {selected.display_name}'s OpenAI-compatible API and covered by tests, but not yet tried with a live key. Use
+                  Test connection and the routing checks before relying on it.
+                </p>
+              ) : null}
 
               {selected.requires_api_key ? (
                 <div className="space-y-1.5">
@@ -171,12 +178,16 @@ export function AddProviderDialog({
                   <Input
                     id="provider-url"
                     type="url"
-                    placeholder="https://"
+                    placeholder={selected.default_base_url ?? "https://"}
                     value={baseUrl}
                     onChange={(e) => setBaseUrl(e.target.value)}
                     required={selected.base_url_mode === "required"}
                   />
-                  <p className="text-xs text-faint">Leave empty to use the provider's official endpoint.</p>
+                  <p className="text-xs text-faint">
+                    {selected.data_location === "local"
+                      ? `Leave empty for ${selected.default_base_url ?? "the default local address"}. In Docker, use http://host.docker.internal:… instead of localhost.`
+                      : "Leave empty to use the provider's official endpoint."}
+                  </p>
                 </div>
               ) : null}
             </>

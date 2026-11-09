@@ -234,3 +234,25 @@ answer.
 steps outside the DSL, add domains or reveal secrets. Analysis runs synchronously in the request
 (like plan generation) and costs one AI call; repair costs one more.
 
+## ADR-022 OpenAI-compatible adapters, labelled unverified (2026-11-09, accepted; implemented in M8)
+
+**Context.** DeepSeek, Mistral, xAI, OpenRouter, Ollama and LM Studio expose OpenAI-compatible
+Chat Completions APIs; no live keys were available to verify them.
+**Decision.** One OpenAI adapter with per-provider settings (endpoint, token parameter, JSON
+Schema support, placeholder key for local servers); errors carry the provider's name. The
+catalog marks them `verified: false` and the UI says so until a live run confirms them. Local
+servers get their own endpoint policy (loopback/LAN allowed, link-local metadata blocked) and
+are disabled in production unless `AI_ALLOW_LOCAL_PROVIDERS` is set. Azure OpenAI (deployments,
+API versions, Entra ID) and AWS Bedrock (SigV4) stay planned.
+**Consequences.** Six more providers with little new code and honest labels; their real-world
+quirks may still need fixes once someone runs them with a key.
+
+## ADR-023 Reports are generated, self-contained HTML (2026-11-09, accepted; implemented in M8)
+
+**Decision.** `GET /executions/{id}/report` builds the report from stored records on request:
+one HTML file with escaped content, screenshots as data URIs (size-capped) and a meta CSP that
+forbids scripts and external loads. Nothing is stored; there is no AI-written text except the
+failure analysis already shown in the app, labelled as hypotheses.
+**Consequences.** Reports are always consistent with the run, shareable as one file and safe to
+open; very large runs drop screenshots beyond the size budget.
+

@@ -6,7 +6,7 @@ Please do not open public issues for security problems. Contact the maintainer p
 with a description, reproduction steps and impact. You will get an acknowledgement and a
 fix timeline.
 
-## What is implemented (Milestones 1–7)
+## What is implemented (Milestones 1–8)
 
 | AI control (M2) | Implementation |
 | --- | --- |
@@ -61,6 +61,14 @@ fix timeline.
 | No silent changes | Repairs are proposals; approval re-validates (allowed domains, test data, DSL) and creates a new immutable version through the normal path; stale proposals are refused; every decision is audited |
 | Test integrity | The repair prompt forbids weakening assertions to hide bugs; edits are limited to replace/insert/remove of DSL steps |
 | Reversibility | Rollback makes an earlier immutable version current again (audited) |
+
+| Reporting and providers (M8) | Implementation |
+| --- | --- |
+| HTML reports | Built from stored, scrubbed records; all text escaped; meta CSP `default-src 'none'; img-src data:; style-src 'unsafe-inline'`; delivered as an attachment; owner-checked |
+| Usage data | `GET /ai/usage` aggregates only the caller's own request log |
+| Local AI providers | Loopback/LAN endpoints allowed only for Ollama/LM Studio, link-local metadata always blocked, disabled in production unless `AI_ALLOW_LOCAL_PROVIDERS=true` |
+| Unverified providers | Labelled in the UI until exercised with a live key |
+| Retention | Orphaned and expired artifacts removed (`ARTIFACT_RETENTION_DAYS`); run history stays |
 
 | Control | Implementation |
 | --- | --- |

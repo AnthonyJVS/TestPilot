@@ -2,6 +2,7 @@ import { Check } from "lucide-react";
 import { Link } from "react-router";
 
 import { useProviders, useRouting } from "@/features/ai-providers/api";
+import { useExecutions } from "@/features/executions/api";
 import { useProjects } from "@/features/projects/api";
 import { cn } from "@/lib/utils";
 
@@ -18,11 +19,13 @@ export function PreflightChecklist() {
   const providers = useProviders();
   const routing = useRouting();
   const projects = useProjects();
+  const runs = useExecutions({ limit: 1 });
   const aiReady =
     Boolean(providers.data?.some((p) => p.status === "connected")) &&
     Boolean(routing.data?.effective.some((r) => r.model && r.issues.length === 0));
   const hasProject = (projects.data?.length ?? 0) > 0;
   const hasApproved = Boolean(projects.data?.some((p) => p.approved_count > 0));
+  const hasRun = (runs.data?.length ?? 0) > 0;
 
   const steps: Step[] = [
     { title: "Create your account", description: "Signed in and protected by a rotating session.", done: true },
@@ -50,9 +53,11 @@ export function PreflightChecklist() {
     },
     {
       title: "Run the test and watch it live",
-      description: "Follow each step with real browser screenshots.",
-      done: false,
-      milestone: 4,
+      description: hasRun
+        ? "At least one run is in the Execution Center."
+        : "Follow each step with real browser screenshots.",
+      done: hasRun,
+      to: "/executions",
     },
   ];
   const completed = steps.filter((s) => s.done).length;

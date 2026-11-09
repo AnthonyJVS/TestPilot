@@ -1,9 +1,9 @@
-import { MonitorPlay } from "lucide-react";
 import { Link } from "react-router";
 
 import { ErrorState } from "@/components/common/ErrorState";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ExecutionsList } from "@/features/executions/ExecutionsList";
 
 import { ActivityList } from "./ActivityList";
 import { useAuditLogs } from "./api";
@@ -47,22 +47,16 @@ function RecentActivity() {
 
 function ExecutionsPanel() {
   return (
-    <section aria-labelledby="runs-heading" className="rounded-panel border border-border bg-panel">
-      <div className="border-b border-border px-5 py-4">
+    <section aria-labelledby="runs-heading" className="space-y-3">
+      <div className="flex items-baseline justify-between">
         <h2 id="runs-heading" className="text-[15px] font-semibold">
           Recent runs
         </h2>
+        <Link to="/executions" className="text-[13px] text-beacon hover:underline">
+          View all
+        </Link>
       </div>
-      <div className="flex items-start gap-4 px-5 py-6">
-        <MonitorPlay className="mt-0.5 size-5 shrink-0 text-faint" aria-hidden />
-        <div>
-          <p className="font-medium">No runs yet</p>
-          <p className="mt-0.5 max-w-md text-[13px] text-muted">
-            Test runs will be listed here with their status and duration once browser execution ships
-            in milestone 4.
-          </p>
-        </div>
-      </div>
+      <ExecutionsList limit={5} emptyHint="No runs yet. Approve a test plan, then choose Run test." />
     </section>
   );
 }

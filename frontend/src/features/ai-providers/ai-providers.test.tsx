@@ -27,18 +27,22 @@ const types: ProviderType[] = [
     supports_model_listing: true,
     key_help_url: "https://aistudio.google.com/apikey",
     milestone: null,
+    verified: true,
+    default_base_url: null,
   },
   {
-    type_id: "ollama",
-    display_name: "Ollama",
-    description: "Local models.",
+    type_id: "aws_bedrock",
+    display_name: "AWS Bedrock",
+    description: "Models in your AWS account.",
     status: "planned",
-    data_location: "local",
-    requires_api_key: false,
-    base_url_mode: "required",
+    data_location: "external",
+    requires_api_key: true,
+    base_url_mode: "none",
     supports_model_listing: true,
     key_help_url: null,
-    milestone: 8,
+    milestone: null,
+    verified: true,
+    default_base_url: null,
   },
 ];
 
@@ -141,7 +145,7 @@ describe("AI Providers page", () => {
     await userEvent.click(screen.getByRole("button", { name: "Connect Gemini" }));
 
     const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByText(/Planned for milestone 8: Ollama/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Planned after v1 \(they need their own protocols\): AWS Bedrock/)).toBeInTheDocument();
     await userEvent.type(within(dialog).getByLabelText("API key"), "AIza-test-key-WXYZ");
     await userEvent.click(within(dialog).getByRole("button", { name: "Save and test" }));
 

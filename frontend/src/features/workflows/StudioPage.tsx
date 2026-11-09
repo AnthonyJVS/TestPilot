@@ -316,11 +316,11 @@ function Palette({ defs, onAdd }: { defs: NodeTypeDef[]; onAdd: (type: string) =
                         e.dataTransfer.effectAllowed = "move";
                       }}
                       onClick={() => onAdd(def.type)}
-                      title={def.available ? def.description : `Planned for milestone ${def.milestone}`}
+                      title={def.available ? def.description : def.milestone ? `Planned for milestone ${def.milestone}` : "Planned after v1"}
                       className="w-full rounded-control px-2 py-1.5 text-left text-[13px] hover:bg-raised disabled:cursor-not-allowed disabled:opacity-45"
                     >
                       {def.label}
-                      {!def.available ? <span className="ml-1 text-[10px] text-faint">M{def.milestone}</span> : null}
+                      {!def.available ? <span className="ml-1 text-[10px] text-faint">{def.milestone ? `M${def.milestone}` : "planned"}</span> : null}
                     </button>
                   </li>
                 ))}

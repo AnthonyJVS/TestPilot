@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useVersion } from "@/features/projects/api";
 import { FailurePanel } from "@/features/quality/FailurePanel";
+import { ReportButtons } from "@/features/reports/ReportsPage";
 import { cn, formatDateTime } from "@/lib/utils";
 import type { Execution, ExecutionEvent, ExecutionStep, PlanStep, TestExecution } from "@/types/api";
 
@@ -79,6 +80,7 @@ export function RunHeader({
           <RunStatus status={execution.status} className="text-sm" />
         </div>
         <div className="flex items-center gap-2">
+          {!live ? <ReportButtons executionId={execution.id} compact /> : null}
           <LiveBadge state={streamState} live={live} />
           {live ? (
             <Button

@@ -61,15 +61,8 @@ export const NAV_ITEMS: NavItem[] = [
     path: "/reports",
     label: "Reports",
     icon: FileText,
-    status: "planned",
-    milestone: 8,
+    status: "available",
     summary: "Shareable HTML reports for every run.",
-    plannedCapabilities: [
-      "Pass, fail and skip summary with durations",
-      "Screenshots, logs and artifacts",
-      "Failure analysis that separates evidence from AI hypotheses",
-      "The provider and model used for each AI task",
-    ],
   },
   {
     path: "/settings",

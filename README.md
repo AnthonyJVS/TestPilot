@@ -6,7 +6,7 @@ Describe a test in plain language. TestPilot turns it into a structured, reviewa
 plan, executes it in an isolated browser, streams every step live, and explains failures —
 using one AI provider (a single Gemini key is enough) or several, routed per task.
 
-> **Project status: Milestone 7 (failure analysis and repair) of 8.** Authentication, the dashboard,
+> **Project status: all 8 milestones implemented (v1).** Authentication, the dashboard,
 > the Docker stack, the AI provider layer (Gemini, Claude, OpenAI with Simple/Advanced
 > routing), the Testing Workspace (projects, encrypted test data, AI-generated editable test
 > plans, approval, versioned Playwright code) and real test runs in an isolated browser
@@ -14,8 +14,8 @@ using one AI provider (a single Gemini key is enough) or several, routed per tas
 > editor with a real DAG engine: branches, retries, timeouts, error paths, AI and browser
 > nodes) and the Execution Center (live canvas, live browser frames, replay of any run,
 > node and step inspector with AI call details) and AI failure analysis with human-approved
-> repairs work today. Reports and more providers are scheduled — they are labelled *Planned*
-> in the UI and nothing is simulated.
+> repairs, HTML reports and an AI usage dashboard work today. What is not built (Azure OpenAI,
+> AWS Bedrock, a few workflow nodes) is labelled *Planned* in the UI; nothing is simulated.
 > See the [roadmap](docs/DEVELOPMENT_ROADMAP.md).
 
 ## Features
@@ -31,7 +31,7 @@ using one AI provider (a single Gemini key is enough) or several, routed per tas
 | Workflow Studio: node palette, XYFlow canvas with typed ports, inspector generated from node schemas, live validation, immutable versions, duplicate, templates; DAG engine with branches, merges, retries, timeouts, error paths and cancellation; browser, test, AI and logic nodes — see [WORKFLOW_ENGINE.md](docs/WORKFLOW_ENGINE.md) | ✅ Milestone 5 |
 | Execution Center: live workflow canvas, Browser Preview with throttled live frames during long steps, replay of any run from its event log (scrubber, filmstrip, re-derived step/node states), node and step inspector (output, evidence, sanitized AI calls with provider and model), timeline filters and search, run filters — see [EXECUTION_CENTER.md](docs/EXECUTION_CENTER.md) | ✅ Milestone 6 |
 | Failure analysis (verified evidence vs AI hypotheses, accessibility snapshot, screenshot for vision models) and human-approved repairs (step diff, validation, new version, rollback); Failure Analyzer workflow node — see [FAILURE_ANALYSIS.md](docs/FAILURE_ANALYSIS.md) | ✅ Milestone 7 |
-| HTML reports, AI usage dashboard, more providers | Planned — M8 |
+| Self-contained HTML run reports (screenshots embedded, scripts disabled), AI usage dashboard (requests, failures, tokens, latency per day, model and task), OpenAI-compatible providers DeepSeek, Mistral, xAI, OpenRouter, Ollama, LM Studio (marked *unverified* until tried with live keys), artifact retention, deployment guide — see [DEPLOYMENT.md](docs/DEPLOYMENT.md) | ✅ Milestone 8 |
 
 ## Architecture
 
@@ -55,6 +55,8 @@ Details: [ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
 [WORKFLOW_ENGINE.md](docs/WORKFLOW_ENGINE.md) ·
 [EXECUTION_CENTER.md](docs/EXECUTION_CENTER.md) ·
 [BROWSER_EXECUTION.md](docs/BROWSER_EXECUTION.md) ·
+[FAILURE_ANALYSIS.md](docs/FAILURE_ANALYSIS.md) ·
+[DEPLOYMENT.md](docs/DEPLOYMENT.md) ·
 [AI_PROVIDER_INTEGRATION.md](docs/AI_PROVIDER_INTEGRATION.md)
 
 ## Tech stack
@@ -139,6 +141,8 @@ All variables are documented in [.env.example](.env.example). The important ones
 | `EXECUTION_MODE` / `BROWSER_TRANSPORT` | `celery`/`redis` (isolated, required in production) or `inline`/`thread` (development) | `inline`/`thread` (compose: `celery`/`redis`) |
 | `BROWSER_ALLOW_PRIVATE_NETWORK` | Let tests reach localhost/private networks (metadata stays blocked) | `false` |
 | `ARTIFACTS_DIR` | Screenshots, traces, videos and logs | `./data/artifacts` (compose: volume) |
+| `ARTIFACT_RETENTION_DAYS` | Keep run artifacts this many days (`0` = forever) | `30` |
+| `AI_ALLOW_LOCAL_PROVIDERS` | Allow Ollama / LM Studio on loopback or LAN addresses | on in development, off in production |
 
 ## Database
 

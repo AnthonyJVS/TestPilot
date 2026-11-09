@@ -89,6 +89,9 @@ services:
     restart: unless-stopped
     command: ["celery", "-A", "app.worker", "worker", "--loglevel=INFO", "--concurrency=2"]
     environment: *backend-env
+    volumes:
+      # Read-write for artifact retention: python -m app.maintenance cleanup-artifacts
+      - artifacts:/artifacts
     healthcheck:
       disable: true
     depends_on:

@@ -73,15 +73,21 @@ describe("authentication flow", () => {
 });
 
 describe("application shell", () => {
-  it("labels planned sections honestly instead of showing fake data", async () => {
-    mockFetch((url) => (url === "/api/v1/auth/refresh" ? json(200, tokenResponse()) : undefined), status, noAudit);
+  it("offers every section as a working page, with no planned placeholders left", async () => {
+    mockFetch(
+      (url) => (url === "/api/v1/auth/refresh" ? json(200, tokenResponse()) : undefined),
+      (url) => (url.startsWith("/api/v1/executions") ? json(200, []) : undefined),
+      status,
+      noAudit,
+    );
     renderApp("/reports");
 
     expect(await screen.findByRole("heading", { name: "Reports" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Not available yet" })).toBeInTheDocument();
-    expect(screen.getByText(/planned for milestone 8/i)).toBeInTheDocument();
+    expect(await screen.findByText("Reports appear here when a run finishes.")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Not available yet" })).not.toBeInTheDocument();
 
     const nav = screen.getAllByRole("navigation", { name: "Main" })[0]!;
+    expect(within(nav).queryByText("Planned")).not.toBeInTheDocument();
     for (const label of ["Dashboard", "Projects", "Workflow Studio", "Executions", "AI Providers", "Reports", "Settings"]) {
       expect(within(nav).getByRole("link", { name: new RegExp(label) })).toBeInTheDocument();
     }

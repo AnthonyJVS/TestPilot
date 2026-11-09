@@ -1,8 +1,9 @@
 # AI Provider Integration
 
-> Status: **Implemented (Milestone 2)** for Google Gemini, Anthropic Claude and
-> OpenAI. The other eight providers are listed in the catalog as *planned*
-> (milestone 8) and cannot be selected.
+> Status: **Implemented** for Google Gemini, Anthropic Claude and OpenAI (M2) and, through
+> OpenAI-compatible adapters, DeepSeek, Mistral, xAI, OpenRouter, Ollama and LM Studio (M8,
+> marked *unverified* in the UI until exercised with live keys). Azure OpenAI and AWS Bedrock
+> need their own protocols and are planned after v1.
 
 ## 0. Implementation status and verification
 
@@ -11,6 +12,8 @@
 | Google Gemini | `google-genai==3.0.0` | `services/ai/providers/gemini.py` | request format, model listing, quota vs rate-limit vs auth vs 5xx mapping, safety blocks | Invalid key → *"Gemini rejected the API key"* against the live API (2026-11-08). A positive run with a real key is pending. |
 | Anthropic Claude | `anthropic==2.6.0` | `.../anthropic.py` | `output_config` structured output, image blocks, capability metadata, 401/429/529 mapping | Invalid key → auth error against the live API (2026-11-08). |
 | OpenAI | `openai==3.46.0` | `.../openai.py` | `response_format=json_schema`, data-URL images, non-chat model filtering, quota vs rate-limit mapping | Invalid key → auth error against the live API (2026-11-08). |
+| DeepSeek, Mistral, xAI, OpenRouter | `openai==3.46.0` | `.../openai_compatible.py` | endpoint, `max_tokens`, JSON mode with the schema in the prompt (DeepSeek), errors named after the provider | Not yet run with live keys: **unverified** |
+| Ollama, LM Studio (local) | `openai==3.46.0` | `.../openai_compatible.py` | localhost default endpoint, no key, local endpoint policy (metadata blocked) | Not yet run against a local server: **unverified** |
 
 Facts verified against the installed SDK source (not assumed):
 
@@ -155,4 +158,5 @@ credentials and resolve only to public addresses (SSRF protection).
 | `POST /ai/providers/{id}/models`, `DELETE /ai/models/{id}` | Manual model IDs |
 | `GET/PUT /ai/routing` | Mode, default, per-task routes, fallback, daily limit, payload previews; effective route per task with issues/warnings |
 | `POST /ai/routing/check/{task}` | Real minimal call for one task |
-| `GET /ai/requests` | AI request log (requested vs actual model, attempts, tokens, latency, sanitized payloads) |
+| `GET /ai/requests`, `GET /ai/requests/{id}` | AI request log (requested vs actual model, attempts, tokens, latency, sanitized payloads) |
+| `GET /ai/usage?days=` | Usage dashboard: per day, model and task; totals, p95 latency, fallbacks, daily limit |
