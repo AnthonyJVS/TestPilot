@@ -14,6 +14,7 @@ When it fails, see the evidence and approve the AI's fix.**
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
 ![Playwright](https://img.shields.io/badge/Playwright-1.62-2EAD33?logo=playwright&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 [Why](#why-testpilot) · [Features](#features) · [How it works](#how-it-works) · [Quick start](#quick-start) · [Architecture](#architecture) · [Docs](#documentation)
 
@@ -253,5 +254,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-No open-source license has been chosen yet, so all rights are reserved by the author. Please
-ask before reusing the code.
+TestPilot is released under the [MIT License](LICENSE).
