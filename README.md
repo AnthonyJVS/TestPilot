@@ -1,37 +1,138 @@
+<div align="center">
+
+<img src="frontend/public/favicon.svg" alt="TestPilot logo" width="88">
+
 # TestPilot
 
-**AI-assisted autonomous web testing with a visual workflow studio.**
+**Describe a web test in plain language. Watch it run in a real browser.<br>
+When it fails, see the evidence and approve the AI's fix.**
 
-Describe a test in plain language. TestPilot turns it into a structured, reviewable test
-plan, executes it in an isolated browser, streams every step live, and explains failures —
-using one AI provider (a single Gemini key is enough) or several, routed per task.
+[![CI](https://github.com/AnthonyJVS/TestPilot/actions/workflows/ci.yml/badge.svg)](https://github.com/AnthonyJVS/TestPilot/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-1.62-2EAD33?logo=playwright&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 
-> **Project status: all 8 milestones implemented (v1).** Authentication, the dashboard,
-> the Docker stack, the AI provider layer (Gemini, Claude, OpenAI with Simple/Advanced
-> routing), the Testing Workspace (projects, encrypted test data, AI-generated editable test
-> plans, approval, versioned Playwright code) and real test runs in an isolated browser
-> worker (live events, step screenshots, traces, history) and Workflow Studio (visual node
-> editor with a real DAG engine: branches, retries, timeouts, error paths, AI and browser
-> nodes) and the Execution Center (live canvas, live browser frames, replay of any run,
-> node and step inspector with AI call details) and AI failure analysis with human-approved
-> repairs, HTML reports and an AI usage dashboard work today. What is not built (Azure OpenAI,
-> AWS Bedrock, a few workflow nodes) is labelled *Planned* in the UI; nothing is simulated.
-> See the [roadmap](docs/DEVELOPMENT_ROADMAP.md).
+[Why](#why-testpilot) · [Features](#features) · [How it works](#how-it-works) · [Quick start](#quick-start) · [Architecture](#architecture) · [Docs](#documentation)
+
+</div>
+
+<br>
+
+![Execution Center: an 18-step login and checkout test, replayed step by step with the browser preview](docs/images/execution-center.jpg)
+
+<p align="center"><sub><b>Execution Center</b>: an 18-step login-and-checkout test against a public demo shop. Every step is recorded and can be replayed with its browser frame.</sub></p>
+
+## Why TestPilot
+
+AI testing tools usually do one of two things: let a model click around on every run (slow,
+costly, and different each time), or leave you to hand-write Playwright code. TestPilot splits
+the work:
+
+- **AI writes and repairs tests, it does not run them.** A model turns your scenario into a
+  validated test plan (a small action DSL). Approved plans run through a controlled Playwright
+  adapter: no model in the loop at run time, and model-generated code is never executed.
+- **Every run is visible.** Steps stream live with browser frames, and any finished run can be
+  scrubbed through from its event log.
+- **Failures come with evidence.** TestPilot collects the facts (error, page snapshot,
+  screenshot, console, network, history). The AI's explanation has to cite them and is shown as
+  a hypothesis, never as a fact.
+- **Nothing changes without you.** A fix arrives as a step diff and becomes a new immutable
+  version only after you approve it. Rolling back takes one click.
+- **Bring your own model.** One Gemini key is enough. Claude, OpenAI and OpenAI-compatible
+  providers can be added and routed per task.
 
 ## Features
 
-| Feature | Status |
+| | |
 | --- | --- |
-| Accounts: registration, sign-in, rotating refresh sessions, sign-out, audit log | ✅ Milestone 1 |
-| Dashboard with live system status and account activity | ✅ Milestone 1 |
-| Dark (default) and light themes, responsive layout | ✅ Milestone 1 |
-| Multi-LLM: Gemini, Claude, OpenAI; Simple mode (one key) and Advanced per-task routing; encrypted keys; model discovery and manual IDs; routing checks; explicit fallback; daily limits; AI request log | ✅ Milestone 2 |
-| Testing Workspace: projects, environments, encrypted test data, suites, plain-language scenarios, AI requirement analysis and test plans, plan editor with validation, approval into immutable versions, deterministic Playwright code (Python and TypeScript) — see [TEST_PLAN_DSL.md](docs/TEST_PLAN_DSL.md) | ✅ Milestone 3 |
-| Isolated browser execution (Chromium, Firefox, WebKit): live step events over SSE, screenshots per step with secret masking, Playwright traces, video, console and network capture, network policy, cancellation, run history — see [BROWSER_EXECUTION.md](docs/BROWSER_EXECUTION.md) | ✅ Milestone 4 |
-| Workflow Studio: node palette, XYFlow canvas with typed ports, inspector generated from node schemas, live validation, immutable versions, duplicate, templates; DAG engine with branches, merges, retries, timeouts, error paths and cancellation; browser, test, AI and logic nodes — see [WORKFLOW_ENGINE.md](docs/WORKFLOW_ENGINE.md) | ✅ Milestone 5 |
-| Execution Center: live workflow canvas, Browser Preview with throttled live frames during long steps, replay of any run from its event log (scrubber, filmstrip, re-derived step/node states), node and step inspector (output, evidence, sanitized AI calls with provider and model), timeline filters and search, run filters — see [EXECUTION_CENTER.md](docs/EXECUTION_CENTER.md) | ✅ Milestone 6 |
-| Failure analysis (verified evidence vs AI hypotheses, accessibility snapshot, screenshot for vision models) and human-approved repairs (step diff, validation, new version, rollback); Failure Analyzer workflow node — see [FAILURE_ANALYSIS.md](docs/FAILURE_ANALYSIS.md) | ✅ Milestone 7 |
-| Self-contained HTML run reports (screenshots embedded, scripts disabled), AI usage dashboard (requests, failures, tokens, latency per day, model and task), OpenAI-compatible providers DeepSeek, Mistral, xAI, OpenRouter, Ollama, LM Studio (marked *unverified* until tried with live keys), artifact retention, deployment guide — see [DEPLOYMENT.md](docs/DEPLOYMENT.md) | ✅ Milestone 8 |
+| 🧪 **Testing Workspace** | Projects, environments with encrypted test data and secrets, plain-language scenarios, AI test plans, a plan editor with live validation, approval into immutable versions, exportable Playwright code (Python and TypeScript) |
+| 🛡️ **Isolated execution** | Chromium, Firefox and WebKit in a separate worker container with no database access and no credentials; allowed-domain policy with private ranges and cloud metadata blocked; screenshots with secret masking, traces, video, console and network capture |
+| 📺 **Execution Center** | Live step timeline and browser preview, replay with a filmstrip, step and node inspector with sanitized AI calls, self-contained HTML reports |
+| 🩺 **Failure analysis** | Verified evidence next to AI hypotheses, the failing screenshot for vision models, repairs as step diffs, human approval, rollback |
+| 🧩 **Workflow Studio** | Visual node editor with typed ports; a DAG engine with branches, merges, retries, timeouts, error paths and cancellation; browser, test, AI and logic nodes |
+| 🤖 **Multi-LLM layer** | Gemini, Claude and OpenAI, plus OpenAI-compatible DeepSeek, Mistral, xAI, OpenRouter, Ollama and LM Studio; one-key Simple mode or per-task routing with fallback, daily limits, a request log and a usage dashboard |
+| 🔐 **Accounts and security** | Argon2id passwords, rotating refresh sessions, rate limiting, audit log, AES-256-GCM encrypted provider keys, strict security headers |
+
+<p align="center">
+  <img src="docs/images/failure-analysis.jpg" alt="Failure analysis: verified evidence next to AI hypotheses and an approved step diff" width="880">
+  <br>
+  <sub><b>Failure analysis</b>: facts collected by TestPilot (left), the model's explanation that cites them (right), and the approved fix as a step diff.</sub>
+</p>
+
+## How it works
+
+```mermaid
+flowchart LR
+    A["Scenario<br/>in plain language"] --> B["AI test plan<br/>validated DSL"]
+    B --> C{"You review<br/>and approve"}
+    C --> D["Immutable version<br/>+ Playwright code"]
+    D --> E["Run in an<br/>isolated browser"]
+    E -->|passed| F["Report and replay"]
+    E -->|failed| G["Evidence +<br/>AI hypotheses"]
+    G --> H["Proposed fix<br/>as a step diff"]
+    H --> C
+```
+
+## Quick start
+
+### With Docker (recommended)
+
+Requires Docker Desktop or Docker Engine with Compose v2.
+
+```bash
+cp .env.example .env
+```
+
+Fill in `POSTGRES_PASSWORD`, `JWT_SECRET` and `ENCRYPTION_KEYS` in `.env`. Generate the first two with:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+```
+
+and the encryption key with:
+
+```bash
+python -c "import os,base64; print('v1:' + base64.urlsafe_b64encode(os.urandom(32)).decode())"
+```
+
+Then start the stack:
+
+```bash
+docker compose up --build
+```
+
+Open <http://localhost:8080>, create an account and add an AI provider key under
+**AI Providers** (a free Gemini key is enough). API docs are at <http://localhost:8080/api/docs>.
+
+### Local development (no Docker)
+
+SQLite, an in-memory rate limiter and an in-process browser are used automatically.
+
+```bash
+cd backend
+python -m venv .venv
+.venv/Scripts/python -m pip install -e ".[dev]"      # macOS/Linux: .venv/bin/python
+.venv/Scripts/python -m playwright install chromium
+.venv/Scripts/alembic upgrade head
+.venv/Scripts/python -m uvicorn --factory app.main:app_factory --reload --port 8000
+```
+
+In a second terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open <http://localhost:5173>. Local runs execute inside the API process without container
+isolation, and the UI labels them *Development mode*. To test a site running on your own
+machine, set `BROWSER_ALLOW_PRIVATE_NETWORK=true` in `backend/.env`.
+
+> **Windows PowerShell 5.1** does not support `&&`; run the commands one per line as shown.
 
 ## Architecture
 
@@ -47,167 +148,110 @@ flowchart LR
     BW --> SITE["Target website"]
 ```
 
-Key decisions: AI produces a validated action DSL that a controlled Playwright adapter
-executes — model-generated code is never run; the browser worker holds no secrets and no
-database access; every run is a workflow execution with persisted, replayable events.
-Details: [ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
-[ENGINEERING_DECISIONS.md](docs/ENGINEERING_DECISIONS.md) ·
-[WORKFLOW_ENGINE.md](docs/WORKFLOW_ENGINE.md) ·
-[EXECUTION_CENTER.md](docs/EXECUTION_CENTER.md) ·
-[BROWSER_EXECUTION.md](docs/BROWSER_EXECUTION.md) ·
-[FAILURE_ANALYSIS.md](docs/FAILURE_ANALYSIS.md) ·
-[DEPLOYMENT.md](docs/DEPLOYMENT.md) ·
-[AI_PROVIDER_INTEGRATION.md](docs/AI_PROVIDER_INTEGRATION.md)
+- The AI produces a validated action DSL that a controlled Playwright adapter executes.
+- The browser worker holds no secrets and has no database access; it talks to the orchestrator
+  only through typed commands over Redis, on its own networks.
+- Every run is a workflow execution with persisted, replayable events. Live updates use
+  Server-Sent Events.
+- REST API under `/api/v1` with an OpenAPI schema; the frontend's API types are generated from it.
+
+More detail: [ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
+[ENGINEERING_DECISIONS.md](docs/ENGINEERING_DECISIONS.md)
 
 ## Tech stack
 
-- **Backend:** Python 3.12+ (images use 3.13), FastAPI, Pydantic 2, SQLAlchemy 2 (async),
-  Alembic, PostgreSQL 17, Redis 7, Argon2id, PyJWT, Celery 5, Playwright 1.62.
-- **Frontend:** React 19, TypeScript 5.9, Vite 8, Tailwind CSS 4, shadcn/ui patterns on
-  Radix, TanStack Query 5, React Router 8, Zustand 5, XYFlow 12. Recharts arrives with the
-  usage dashboard.
-- **Tooling:** pytest, Vitest + React Testing Library, ruff, mypy (strict), ESLint, Docker
-  Compose, GitHub Actions.
+| Layer | Tools |
+| --- | --- |
+| Backend | Python 3.12+, FastAPI, Pydantic 2, SQLAlchemy 2 (async), Alembic, Celery 5 |
+| Data | PostgreSQL 17 (SQLite for local development), Redis 7 |
+| Browser | Playwright 1.62: Chromium, Firefox, WebKit |
+| Frontend | React 19, TypeScript 5.9, Vite 8, Tailwind CSS 4, TanStack Query 5, Zustand 5, XYFlow 12 |
+| AI SDKs | google-genai, anthropic, openai |
+| Quality | pytest, Vitest and Testing Library, ruff, mypy (strict), ESLint, GitHub Actions |
 
-## Quick start with Docker
+## Configuration
 
-Requires Docker Desktop (Windows/macOS) or Docker Engine with Compose v2.
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and set `POSTGRES_PASSWORD` and `JWT_SECRET`. Generate values with:
-
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(48))"
-```
-
-```bash
-docker compose up --build
-```
-
-Open <http://localhost:8080> and create an account. API docs: <http://localhost:8080/api/docs>.
-
-The stack runs `postgres`, `redis`, a one-shot `migrate` job (Alembic), `backend`, `worker`
-(Celery orchestrator), `browser-worker` (Playwright with Chromium, Firefox and WebKit) and
-`frontend` (Nginx). Only port 8080 is published; PostgreSQL and Redis sit on an internal
-network with no internet access. The browser worker has no database access and no
-credentials: it reaches Redis over a dedicated network and the internet over its own.
-
-## Local development without Docker
-
-**Backend** (SQLite and an in-memory rate limiter are used when PostgreSQL/Redis are absent):
-
-```bash
-cd backend
-python -m venv .venv
-.venv/Scripts/activate        # Windows; use `source .venv/bin/activate` on macOS/Linux
-pip install -e ".[dev]"
-python -m playwright install chromium   # browsers for local test runs
-alembic upgrade head
-uvicorn --factory app.main:app_factory --reload --port 8000
-```
-
-**Frontend** (Vite proxies `/api` to `127.0.0.1:8000`, so cookies stay same-origin):
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open <http://localhost:5173>.
-
-Without Docker, test runs execute inside the API process (`EXECUTION_MODE=inline`,
-`BROWSER_TRANSPORT=thread`): convenient for development, but without container isolation.
-The UI labels such runs "Development mode". Set `BROWSER_ALLOW_PRIVATE_NETWORK=true` in
-`backend/.env` to test an app running on localhost.
-
-## Environment variables
-
-All variables are documented in [.env.example](.env.example). The important ones:
+Every variable is documented in [.env.example](.env.example). The most important ones:
 
 | Variable | Purpose | Default |
 | --- | --- | --- |
-| `APP_ENV` | `development`, `test` or `production` (production enforces PostgreSQL, Redis and a strong `JWT_SECRET`) | `development` |
-| `DATABASE_URL` | SQLAlchemy async URL | SQLite file in `backend/data/` |
-| `REDIS_URL` | Redis for rate limiting (and queues from M4) | unset (in-memory, dev only) |
-| `JWT_SECRET` | HS256 signing key, ≥ 32 characters | ephemeral in development |
-| `ENCRYPTION_KEYS` | AES-256-GCM keys for stored AI provider keys (`v1:<base64url>`, comma-separated for rotation) | local key file in development; required in production |
-| `COOKIE_SECURE` | Send the refresh cookie only over HTTPS | `true` (compose: `false` for localhost) |
-| `ALLOW_REGISTRATION` | Allow self-service sign-up | `true` |
-| `ENABLE_API_DOCS` | Serve Swagger UI at `/api/docs` | `true` |
-| `EXECUTION_MODE` / `BROWSER_TRANSPORT` | `celery`/`redis` (isolated, required in production) or `inline`/`thread` (development) | `inline`/`thread` (compose: `celery`/`redis`) |
-| `BROWSER_ALLOW_PRIVATE_NETWORK` | Let tests reach localhost/private networks (metadata stays blocked) | `false` |
-| `ARTIFACTS_DIR` | Screenshots, traces, videos and logs | `./data/artifacts` (compose: volume) |
-| `ARTIFACT_RETENTION_DAYS` | Keep run artifacts this many days (`0` = forever) | `30` |
-| `AI_ALLOW_LOCAL_PROVIDERS` | Allow Ollama / LM Studio on loopback or LAN addresses | on in development, off in production |
+| `APP_ENV` | `development`, `test` or `production` (production enforces PostgreSQL, Redis and strong secrets) | `development` |
+| `JWT_SECRET` | Token signing key, at least 32 characters | ephemeral in development |
+| `ENCRYPTION_KEYS` | AES-256-GCM keys for stored AI provider keys; comma-separated for rotation | local key file in development |
+| `EXECUTION_MODE` / `BROWSER_TRANSPORT` | `celery` / `redis` (isolated, required in production) or `inline` / `thread` (development) | `inline` / `thread` |
+| `BROWSER_ALLOW_PRIVATE_NETWORK` | Let tests reach localhost and private networks (cloud metadata stays blocked) | `false` |
+| `ARTIFACT_RETENTION_DAYS` | Keep screenshots, traces and logs this many days (`0` keeps them forever) | `30` |
+| `AI_ALLOW_LOCAL_PROVIDERS` | Allow Ollama and LM Studio on loopback or LAN addresses | on in development, off in production |
 
-## Database
+Production setup, HTTPS, backups and upgrades: [DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-Schema changes go through Alembic migrations in `backend/alembic/versions`. A test
-(`test_models_and_migrations_are_in_sync`) fails if models and migrations drift.
+## Testing
 
 ```bash
 cd backend
-alembic upgrade head                              # apply
-alembic revision --autogenerate -m "describe change"   # create, then review the file
-```
-
-## API
-
-REST under `/api/v1`, documented by OpenAPI (`/api/docs`). Every error uses one envelope:
-`{"error": {"code", "message", "request_id", "details"}}`. Frontend types are generated
-from the schema:
-
-```bash
-cd backend && python scripts/export_openapi.py
+.venv/Scripts/python -m pytest -q
+.venv/Scripts/ruff check .
+.venv/Scripts/mypy app browser_worker
 ```
 
 ```bash
-cd frontend && npm run gen:api
+cd frontend
+npm test
+npm run lint
+npm run typecheck
+npm run build
 ```
 
-## Tests
+The backend suite has 222 tests, including real Chromium runs against a local fixture site;
+the frontend has 34. CI runs the backend suite on both PostgreSQL and SQLite, checks that the
+OpenAPI schema and generated types are current, builds the Docker stack, and runs a real test
+through the isolated browser worker
+([`backend/scripts/smoke_run.py`](backend/scripts/smoke_run.py)).
 
-```bash
-cd backend && pytest -q && ruff check . && mypy app browser_worker
-```
+## Project status
 
-```bash
-cd frontend && npm test && npm run lint && npm run typecheck && npm run build
-```
+All eight planned milestones are implemented (v1). Known limitations:
 
-Set `TEST_DATABASE_URL` to run the backend suite against PostgreSQL (CI does both). The
-execution tests drive a real Chromium against a local fixture site and are skipped when
-Chromium is not installed. `python backend/scripts/smoke_run.py http://localhost:8080` runs a
-real test through a deployed stack (CI does this against Docker Compose).
+- Test plans are generated from the scenario text without looking at the live page, so field
+  labels can be guessed wrong on the first run. Failure analysis and repair fix them, but a
+  page-aware planner is the main next step.
+- There is no built-in unique test data per run yet (for example, a fresh email address for a
+  sign-up test).
+- The OpenAI-compatible providers (DeepSeek, Mistral, xAI, OpenRouter, Ollama, LM Studio) are
+  marked *unverified* until tried with live keys. Azure OpenAI and AWS Bedrock are planned.
+- Workflow Studio has no Approval Gate, Switch or data-transform nodes yet; they are shown as
+  planned.
+- No email verification, password reset or profile editing yet.
+
+Unbuilt features are labelled *Planned* in the UI; nothing is simulated.
+
+## Documentation
+
+| Topic | Document |
+| --- | --- |
+| System design | [ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| Decisions (ADRs) | [ENGINEERING_DECISIONS.md](docs/ENGINEERING_DECISIONS.md) |
+| Test plan format | [TEST_PLAN_DSL.md](docs/TEST_PLAN_DSL.md) |
+| Browser execution | [BROWSER_EXECUTION.md](docs/BROWSER_EXECUTION.md) |
+| Workflow engine | [WORKFLOW_ENGINE.md](docs/WORKFLOW_ENGINE.md) |
+| Execution Center | [EXECUTION_CENTER.md](docs/EXECUTION_CENTER.md) |
+| Failure analysis | [FAILURE_ANALYSIS.md](docs/FAILURE_ANALYSIS.md) |
+| AI providers | [AI_PROVIDER_INTEGRATION.md](docs/AI_PROVIDER_INTEGRATION.md) |
+| Deployment | [DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| Roadmap | [DEVELOPMENT_ROADMAP.md](docs/DEVELOPMENT_ROADMAP.md) |
 
 ## Security
 
-Argon2id passwords, 15-minute in-memory access tokens, `HttpOnly`/`SameSite=Strict`
-refresh cookies with rotation and reuse detection, login rate limiting, audit logging,
-secret redaction in logs, strict security headers. See [SECURITY.md](SECURITY.md).
-
-## Known limitations
-
-- The Docker stack and PostgreSQL path are verified by CI, not yet on the original
-  development machine (Docker was not installed there); local runs used SQLite.
-- Profile editing, password change and session management UI are not built yet.
-- The frontend bundle is a single chunk (~660 kB); route-level code splitting comes with
-  the Workflow Studio.
-- No email verification or password reset flow yet.
-- Test runs were verified locally in development mode only; the isolated Docker path
-  (Celery + browser worker) is verified by the CI smoke run, not on the development machine.
-- The Testing Workspace's "Generate with AI" button is still synchronous; the same analysis
-  and planning run on the job queue as workflow AI nodes. Artifacts of deleted projects stay on
-  disk until a retention job exists (M8).
-- Workflow Studio v1: no Approval Gate, Switch or data-transform nodes yet (shown as planned);
-  Merge waits for all branches (no "first input" mode); loops are not supported by design.
-- Only Chromium is installed for local development; Firefox and WebKit ship in the Docker
-  browser worker (`python -m playwright install firefox webkit` adds them locally).
+Passwords are hashed with Argon2id. Access tokens live 15 minutes in memory; refresh cookies
+are `HttpOnly` and `SameSite=Strict`, rotate on use and detect reuse. Provider keys and secret
+test data are encrypted at rest, secrets are masked in screenshots and scrubbed from logs,
+reports and AI requests. See [SECURITY.md](SECURITY.md).
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+No open-source license has been chosen yet, so all rights are reserved by the author. Please
+ask before reusing the code.
