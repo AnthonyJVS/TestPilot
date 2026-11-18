@@ -38,6 +38,9 @@ playwright-report/
 # --- Local tool config (machine-specific paths) ---
 .claude/
 
+# --- Private planning notes (kept locally, not published) ---
+TestPilot_Master_Implementation_Prompt.md
+
 # --- OS / editors ---
 .DS_Store
 Thumbs.db
